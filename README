@@ -1,5 +1,14 @@
-An integration of the Ajax.org Code Editor (ACE) into GWT.
+An integration of the Ajax.org Code Editor (ACE) into GWT. Forked from https://github.com/daveho/AceGWT
 
 See the wiki for more information:
 
   https://github.com/daveho/AceGWT/wiki
+  
+This version has the following changes:
+	* Implemented the IsEditor interface to allow it to be bound to the GWT Editor framework (https://developers.google.com/web-toolkit/doc/latest/DevGuideUiEditors)
+	* ACE Editor is created and destroyed as the GWT widget hosting it is attached or removed from the DOM
+	* The startEditor() method is kept for compatibility, but now does nothing - just add or remove the widget from the DOM and everything else is taken care of
+	* The state of the ACE editor is remembered in the AceEditor class, allowing the underlying editor to be added and removed at will without having to worry about when to call the getter and setter functions
+	* Some additional checks were added to the native JavaScript to deal with NPEs. Any errors are logged to the console, so check the console while debugging
+  
+View a live demo at http://acegwt-pressgangccms.rhcloud.com/.
