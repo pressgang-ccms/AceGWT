@@ -11,5 +11,6 @@ This version has the following changes:
 	* The state of the ACE editor is remembered in the AceEditor class, allowing the underlying editor to be added and removed at will without having to worry about when to call the getter and setter functions
 	* Some additional checks were added to the native JavaScript to deal with NPEs. Any errors are logged to the console, so check the console while debugging
 	* The project has been converted to a Eclipse/GWT project
+	* Removed all references to the require JavaScript function
   
 View a live demo at http://acegwt-pressgangccms.rhcloud.com/.
