@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project-modules id="moduleCoreId" project-version="1.5.0">
     <wb-module deploy-name="AceGWT">
-        <wb-resource deploy-path="/WEB-INF/classes" source-path="/AceGWT/src"/>
-        <wb-resource deploy-path="/WEB-INF/classes" source-path="/AceGWTDemo/src"/>
+        <wb-resource deploy-path="/" source-path="/src/main/java"/>
         <property name="context-root" value="AceGWT"/>
         <property name="java-output-path" value="/AceGWT/bin"/>
     </wb-module>
