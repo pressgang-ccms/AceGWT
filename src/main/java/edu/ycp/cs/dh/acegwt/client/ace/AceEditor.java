@@ -175,9 +175,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			public void onAttachOrDetach(final AttachEvent event)
 			{
 				if (AceEditor.this.isAttached())
+				{
 					startEditorNative(text, theme != null ? theme.getName() : null, mode != null ? mode.getName() : null, readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord, showPrintMargin, useWrap, showInvisibles);
+				}   
 				else
+				{
 					destroy();
+				}
 			}
 		});
 	}

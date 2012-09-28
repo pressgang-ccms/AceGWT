@@ -3,6 +3,12 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
+	<parent>
+		<groupId>org.jboss.pressgang</groupId>
+		<artifactId>pressgang-parent</artifactId>
+		<version>1.0-SNAPSHOT</version>
+	</parent>
+
 	<groupId>org.jboss.pressgang.ccms</groupId>
 	<artifactId>acegwt-client</artifactId>
 	<packaging>jar</packaging>
@@ -17,22 +23,7 @@
 			<id>daveho</id>
 			<name>David H. Hovemeyer</name>
 			<email>david.hovemeyer@gmail.com</email>
-		</developer>
-		<developer>
-			<id>mcasperson</id>
-			<name>Matthew Casperson</name>
-			<email>mcaspers@redhat.com</email>
-		</developer>
-		<developer>
-			<id>lnewson</id>
-			<name>Lee Newson</name>
-			<email>lnewson@redhat.com</email>
-		</developer>
-		<developer>
-			<id>codemiller</id>
-			<name>Katie Miller</name>
-			<email>kamiller@redhat.com</email>
-		</developer>
+		</developer>		
 	</developers>
 	<licenses>
 		<license>
@@ -47,67 +38,8 @@
 		<developerConnection>scm:git@github.com:mcasperson/AceGWT.git</developerConnection>
 	</scm>
 
-	<parent>
-		<groupId>org.sonatype.oss</groupId>
-		<artifactId>oss-parent</artifactId>
-		<version>7</version>
-	</parent>
-
-	<!-- https://docs.sonatype.org/display/Repository/How+To+Generate+PGP+Signatures+With+Maven#HowToGeneratePGPSignaturesWithMaven-MavenGPGPlugin -->
 	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-gpg-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>sign-artifacts</id>
-						<phase>deploy</phase>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-						<configuration>
-							<keyname>62B72888</keyname>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<!-- http://maven.apache.org/plugin-developers/cookbook/attach-source-javadoc-artifacts.html -->
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-				</configuration>
-			</plugin>
-
+		<plugins>		
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>gwt-maven-plugin</artifactId>
@@ -158,12 +90,6 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-
-	<!-- END OF SONATYPE REQUIREMENTS -->
-
-	<properties>
-		<gwt.version>2.4.0</gwt.version>
-	</properties>
 
 	<dependencies>
 		<dependency>
