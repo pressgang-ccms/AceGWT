@@ -274,7 +274,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     {
         super.onUnload();
         this.text = this.getText();
-        this.setUseWrapMode(false);
+        this.setUseWrapModeNative(false);
     }
     
     /**
