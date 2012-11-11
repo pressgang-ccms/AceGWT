@@ -143,22 +143,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         }
 
         initWidget(html);
-
-        /*
-         * Create the ACE widget when this widget is attached to something. Destroy it when it is detached.
-         */
-        this.addAttachHandler(new Handler() {
-            @Override
-            public void onAttachOrDetach(final AttachEvent event) {
-                if (AceEditor.this.isAttached()) {
-                    startEditorNative(text, theme != null ? theme.getName() : null, mode != null ? mode.getName() : null,
-                            readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord,
-                            showPrintMargin, useWrap, showInvisibles);
-                } else {
-                    destroy();
-                }
-            }
-        });
     }
 
     /**
@@ -264,17 +248,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             timeout = null;
         }
         
+        editor.getSession().setUseWrapMode(false);
+        
         if (userWrap)
         {
             // If wrapping is true, Chrome 23 will lock up if the value is set straight away, so use a timer to set it after a short delay
             timeout = setTimeout(function(){editor.getSession().setUseWrapMode(true);}, 100);
         }
-        else
-        {
-            editor.getSession().setUseWrapMode(false);
-        }
-
-		
 
 		// Show invisibles
 		console.log("\t\tSetting Show Invisible Characters");
@@ -284,6 +264,38 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				.log("EXIT AceEditor.startEditorNative(final String text, final String themeName, final String shortModeName, final boolean readOnly, final boolean useSoftTabs, final int tabSize, final boolean hScrollBarAlwaysVisible, final boolean showGutter, final boolean highlightSelectedWord, final boolean showPrintMargin, final boolean userWrap, final boolean showInvisibles)");
 
     }-*/;
+    
+    /**
+     * Called before the widget is removed from the DOM. Save the state of the text, and set
+     * wrapping mode to false to prevent a lock up with Chrome 23
+     */
+    @Override
+    protected void onUnload()
+    {
+        super.onUnload();
+        this.text = this.getText();
+        this.setUseWrapMode(false);
+    }
+    
+    /**
+     * Called after the widget is removed from the DOM. Clean up the ACE editor.
+     */
+    @Override 
+    protected void onDetach()
+    {
+        super.onDetach();
+        destroy();
+    }
+    
+    /** Called after a the widget is added to the DOM. Add the ACE editor */
+    @Override
+    protected void onLoad()
+    {
+        super.onLoad();
+        startEditorNative(text, theme != null ? theme.getName() : null, mode != null ? mode.getName() : null,
+                readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord,
+                showPrintMargin, useWrap, showInvisibles);
+    }
 
     /**
      * Call this to force the editor contents to be redisplayed. There seems to be a problem when an AceEditor is embedded in a
@@ -311,8 +323,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		var text = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::text;
 		if (editor != null) {
-			// Save the text before we destroy the editor. This is needed for the GWT Editor framework
-			text = editor.getSession().getValue();
 			editor.destroy();
 		} else {
 			console
