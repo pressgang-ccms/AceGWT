@@ -48,6 +48,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private final String elementId;
 
     private JavaScriptObject editor;
+    
+    private JavaScriptObject userWrapTimeout;
 
     private JsArray<AceAnnotation> annotations = JavaScriptObject.createArray().cast();
 
@@ -92,10 +94,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private boolean showPrintMargin = false;
     /**
-     * This value is used as a buffer to hold the "user wrap mode" state before the editor is created. This has to be false, as Chrome 23
-     * will hang if user wrap is initially set to true.
+     * This value is used as a buffer to hold the "user wrap mode" state before the editor is created.
      */
-    private boolean useWrap = false;
+    private boolean useWrap = true;
     /**
      * This value is used as a buffer to hold the "show invisible characters" state before the editor is created
      */
@@ -154,8 +155,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                             readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord,
                             showPrintMargin, useWrap, showInvisibles);
                 } else {
-                    /* Save the text so when the control is added again, the text will be up to date */
-                    AceEditor.this.text = AceEditor.this.getText();
                     destroy();
                 }
             }
@@ -256,9 +255,26 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		console.log("\t\tSetting Print Margin");
 		editor.renderer.setShowPrintMargin(showPrintMargin);
 
-		// Set wrapping
+		// Set wrapping. 
 		console.log("\t\tSetting User Wrap");
-		editor.getSession().setUseWrapMode(userWrap);
+		var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
+		if (timeout != null)
+        {
+            timeout.clearTimeout();
+            timeout = null;
+        }
+        
+        if (userWrap)
+        {
+            // If wrapping is true, Chrome 23 will lock up if the value is set straight away, so use a timer to set it after a short delay
+            timeout = setTimeout(function(){editor.getSession().setUseWrapMode(true);}, 100);
+        }
+        else
+        {
+            editor.getSession().setUseWrapMode(false);
+        }
+
+		
 
 		// Show invisibles
 		console.log("\t\tSetting Show Invisible Characters");
@@ -638,8 +654,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private native void setUseWrapModeNative(final boolean userWrap) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (editor != null) {
-			editor.getSession().setUseWrapMode(userWrap);
+		var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
+		
+		if (timeout != null)
+		{
+		    timeout.clearTimeout();
+		    timeout = null;
+		}
+		
+		if (editor != null) {		    
+		    editor.getSession().setUseWrapMode(userWrap);
 		} else {
 			console
 					.log("editor == null. setUserWrapModeNative() was not called successfully.");
