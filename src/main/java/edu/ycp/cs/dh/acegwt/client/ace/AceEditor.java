@@ -154,6 +154,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                             readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord,
                             showPrintMargin, useWrap, showInvisibles);
                 } else {
+                    /* Save the text so when the control is added again, the text will be up to date */
+                    AceEditor.this.text = AceEditor.this.getText();
                     destroy();
                 }
             }
@@ -422,7 +424,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         return thisText == null ? this.text : thisText;
     };
 
-    public void setText(String text) {
+    public void setText(final String text) {
         this.text = text;
         setTextNative(text);
     };
@@ -432,7 +434,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param text the text to set in the editor
      */
-    private native void setTextNative(String text) /*-{
+    private native void setTextNative(final String text) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null) {
 			editor.getSession().setValue(text);
@@ -447,7 +449,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param text text to insert at the cursor
      */
-    public native void insertAtCursor(String text) /*-{
+    public native void insertAtCursor(final String text) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null) {
 			editor.insert(text);
@@ -483,7 +485,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param useSoftTabs true if soft tabs should be used, false otherwise
      */
-    private native void setUseSoftTabsNative(boolean useSoftTabs) /*-{
+    private native void setUseSoftTabsNative(final boolean useSoftTabs) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null) {
 			editor.getSession().setUseSoftTabs(useSoftTabs);
@@ -493,7 +495,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		}
     }-*/;
 
-    public void setUseSoftTabs(boolean useSoftTabs) {
+    public void setUseSoftTabs(final boolean useSoftTabs) {
         this.useSoftTabs = useSoftTabs;
         setUseSoftTabsNative(useSoftTabs);
     };
@@ -503,7 +505,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param tabSize the tab size to set
      */
-    private native void setTabSizeNative(int tabSize) /*-{
+    private native void setTabSizeNative(final int tabSize) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null) {
 			editor.getSession().setTabSize(tabSize);
@@ -513,7 +515,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		}
     }-*/;
 
-    public void setTabSize(int tabSize) {
+    public void setTabSize(final int tabSize) {
         this.tabSize = tabSize;
         setTabSizeNative(tabSize);
     }
@@ -523,7 +525,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param line the line to go to
      */
-    public native void gotoLine(int line) /*-{
+    public native void gotoLine(final int line) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null) {
 			editor.gotoLine(line);
@@ -538,7 +540,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param hScrollBarAlwaysVisible true if the horizontal scrollbar is always visible, false if it is hidden when not needed
      */
-    private native void setHScrollBarAlwaysVisibleNative(boolean hScrollBarAlwaysVisible) /*-{
+    private native void setHScrollBarAlwaysVisibleNative(final boolean hScrollBarAlwaysVisible) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null) {
 			editor.renderer.setHScrollBarAlwaysVisible(hScrollBarAlwaysVisible);
@@ -548,7 +550,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		}
     }-*/;
 
-    public void setHScrollBarAlwaysVisible(boolean hScrollBarAlwaysVisible) {
+    public void setHScrollBarAlwaysVisible(final boolean hScrollBarAlwaysVisible) {
         this.hScrollBarAlwaysVisible = hScrollBarAlwaysVisible;
         setHScrollBarAlwaysVisibleNative(hScrollBarAlwaysVisible);
     }
@@ -558,7 +560,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param showGutter true if the gutter should be shown, false if it should be hidden
      */
-    private native void setShowGutterNative(boolean showGutter) /*-{
+    private native void setShowGutterNative(final boolean showGutter) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null) {
 			editor.renderer.setShowGutter(showGutter);
@@ -568,7 +570,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		}
     }-*/;
 
-    public void setShowGutter(boolean showGutter) {
+    public void setShowGutter(final boolean showGutter) {
         this.showGutter = showGutter;
         setShowGutterNative(showGutter);
     }
@@ -578,7 +580,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param readOnly true if editor should be set to readonly, false if the editor should be set to read-write
      */
-    private native void setReadOnlyNative(boolean readOnly) /*-{
+    private native void setReadOnlyNative(final boolean readOnly) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null)
 			editor.setReadOnly(readOnly);
@@ -594,7 +596,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param highlightSelectedWord true to highlight currently selected word, false otherwise
      */
-    private native void setHighlightSelectedWordNative(boolean highlightSelectedWord) /*-{
+    private native void setHighlightSelectedWordNative(final boolean highlightSelectedWord) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null) {
 			editor.setHighlightSelectedWord(highlightSelectedWord);
@@ -604,7 +606,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		}
     }-*/;
 
-    public void setHighlightSelectedWord(boolean highlightSelectedWord) {
+    public void setHighlightSelectedWord(final boolean highlightSelectedWord) {
         this.highlightSelectedWord = highlightSelectedWord;
         setHighlightSelectedWordNative(highlightSelectedWord);
     }
@@ -614,7 +616,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param showPrintMargin true if the print margin should be shown, false otherwise
      */
-    private native void setShowPrintMarginNative(boolean showPrintMargin) /*-{
+    private native void setShowPrintMarginNative(final boolean showPrintMargin) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null) {
 			editor.renderer.setShowPrintMargin(showPrintMargin);
@@ -624,7 +626,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		}
     }-*/;
 
-    public void setShowPrintMargin(boolean showPrintMargin) {
+    public void setShowPrintMargin(final boolean showPrintMargin) {
         this.showPrintMargin = showPrintMargin;
         setShowPrintMarginNative(showPrintMargin);
     }
@@ -634,7 +636,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param userWrap true if the text should be wrapped, false otherwise
      */
-    private native void setUseWrapModeNative(boolean userWrap) /*-{
+    private native void setUseWrapModeNative(final boolean userWrap) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (editor != null) {
 			editor.getSession().setUseWrapMode(userWrap);
@@ -644,7 +646,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		}
     }-*/;
 
-    public void setUseWrapMode(boolean userWrap) {
+    public void setUseWrapMode(final boolean userWrap) {
         this.useWrap = userWrap;
         setUseWrapModeNative(userWrap);
     }
@@ -715,7 +717,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param command to be removed, one of "gotoline", "findnext", "findprevious", "find", "replace", "replaceall"
      */
-    public native void removeCommandByName(String command) /*-{
+    public native void removeCommandByName(final String command) /*-{
     var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
     if (editor != null)
     {
