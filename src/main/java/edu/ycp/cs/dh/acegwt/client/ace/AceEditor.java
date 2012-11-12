@@ -20,12 +20,13 @@
 
 package edu.ycp.cs.dh.acegwt.client.ace;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.LeafValueEditor;
-import com.google.gwt.event.logical.shared.AttachEvent;
-import com.google.gwt.event.logical.shared.AttachEvent.Handler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -52,6 +53,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private JavaScriptObject userWrapTimeout;
 
     private JsArray<AceAnnotation> annotations = JavaScriptObject.createArray().cast();
+    
+    private static final Logger logger = Logger.getLogger(AceEditor.class.getName());
 
     /**
      * This value is used as a buffer to hold the text before the editor is created
@@ -272,9 +275,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     @Override
     protected void onUnload()
     {
+        logger.log(Level.INFO, "ENTER AceEditor.onUnload()");
         super.onUnload();
         this.text = this.getText();
         this.setUseWrapModeNative(false);
+        logger.log(Level.INFO, "EXIT AceEditor.onUnload()");
     }
     
     /**
@@ -283,18 +288,22 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     @Override 
     protected void onDetach()
     {
+        logger.log(Level.INFO, "ENTER AceEditor.onDetach()");
         super.onDetach();
         destroy();
+        logger.log(Level.INFO, "EXIT AceEditor.onDetach()");
     }
     
     /** Called after a the widget is added to the DOM. Add the ACE editor */
     @Override
     protected void onLoad()
     {
+        logger.log(Level.INFO, "ENTER AceEditor.onLoad()");
         super.onLoad();
         startEditorNative(text, theme != null ? theme.getName() : null, mode != null ? mode.getName() : null,
                 readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord,
                 showPrintMargin, useWrap, showInvisibles);
+        logger.log(Level.INFO, "EXIT AceEditor.onLoad()");
     }
 
     /**
@@ -321,7 +330,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     public native void destroy() /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		var text = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::text;
 		if (editor != null) {
 			editor.destroy();
 		} else {
