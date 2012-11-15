@@ -337,6 +337,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 					.log("editor == null. destory() was not called successfully.");
 		}
     }-*/;
+    
+    public native void focus() /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        if (editor != null) {
+            editor.focus();
+        } else {
+            console.log("editor == null. focus() was not called successfully.");
+        }
+           
+    }-*/;
 
     private native void setShowInvisiblesNative(final boolean showInvisibles) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
@@ -795,4 +805,44 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             }
         };
     }
+    
+    /**
+     * Wraps the currently selected text with the start and end strings
+     * @param start The string to place before the selection
+     * @param end The string to place after the selection
+     */
+    public native void wrapSelection(final String start, final String end)/*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        if (editor != null)
+        {
+            var range = editor.getSelectionRange();
+            var selectedText = editor.getSession().getTextRange(range);
+            editor.getSession().getDocument().replace(range, start + selectedText + end);
+            
+            if (selectedText == "")
+            {
+                editor.getSelection().moveCursorBy(0, -end.length);
+            }
+        }
+        else
+        {
+            console.log("editor == null. wrapSelection() was not called successfully.");
+        }
+    }-*/;
+    
+    /**
+     * Insert text at the current cursor location
+     * @param text the text to insert
+     */
+    public native void insertText(final String text)/*-{
+    var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        if (editor != null)
+        {
+            editor.insert(text);
+        }
+        else
+        {
+            console.log("editor == null. insertText() was not called successfully.");
+        }
+    }-*/;
 }
