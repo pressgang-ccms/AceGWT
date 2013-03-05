@@ -118,6 +118,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     /**
      * Preferred constructor. You should pass <code>true</code> to this constructor, unless you did something special to
      * redefine the <code>.ace_editor</code> CSS class.
+     *
+     * ACE builds up to the 17th of December 2012 (https://github.com/ajaxorg/ace-builds/tree/97bae1d132effbeca5eef8aaef2a2a1fa836b181)
+     * use absolute positioning by default, and so positionAbsolute should be set to true. Later builds use relative positing by
+     * default, and so positionAbsolute should be set to false.
+     *
+     * If you have upgraded your version of the ACE javascript files, and you see nothing on the screen, try setting positionAbsolute
+     * to false.
      * 
      * @param positionAbsolute true if the <code>.ace_editor</code> CSS class is set with <code>position: absolute;</code>,
      *        which is the default; false if <code>.ace_editor</code> is set to use <code>position: relative;</code>
@@ -693,8 +700,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {		    
 		    editor.getSession().setUseWrapMode(userWrap);
 		} else {
-			console
-					.log("editor == null. setUserWrapModeNative() was not called successfully.");
+			console.log("editor == null. setUserWrapModeNative() was not called successfully.");
 		}
     }-*/;
 
@@ -813,7 +819,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     public native void wrapSelection(final String start, final String end)/*-{
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-        if (editor != null)
+        if (editor != null && start != null && end != null)
         {
             var range = editor.getSelectionRange();
             var selectedText = editor.getSession().getTextRange(range);
