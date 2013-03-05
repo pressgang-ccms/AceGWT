@@ -200,13 +200,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		// Set code folding (choose from manual, markbegin, markbeginend)
 		editor.getSession().setFoldStyle("markbeginend");
 
-		// Set text 
-		if (text != null)
-		{
-			console.log("\t\tSetting Text");
-			editor.getSession().setValue(text);
-		}
-
 		// Set theme
 		if (themeName != null)
 		{
@@ -269,6 +262,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		// Show invisibles
 		console.log("\t\tSetting Show Invisible Characters");
 		editor.setShowInvisibles(showInvisibles);
+
+        // Set text
+        if (text != null)
+        {
+            console.log("\t\tSetting Text");
+            editor.getSession().setValue(text);
+        }
 
 		console
 				.log("EXIT AceEditor.startEditorNative(final String text, final String themeName, final String shortModeName, final boolean readOnly, final boolean useSoftTabs, final int tabSize, final boolean hScrollBarAlwaysVisible, final boolean showGutter, final boolean highlightSelectedWord, final boolean showPrintMargin, final boolean userWrap, final boolean showInvisibles)");
