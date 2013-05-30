@@ -173,8 +173,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             final boolean showGutter, final boolean highlightSelectedWord, final boolean showPrintMargin,
             final boolean userWrap, final boolean showInvisibles) /*-{
 
-		console
-				.log("ENTER AceEditor.startEditorNative(final String text, final String themeName, final String shortModeName, final boolean readOnly, final boolean useSoftTabs, final int tabSize, final boolean hScrollBarAlwaysVisible, final boolean showGutter, final boolean highlightSelectedWord, final boolean showPrintMargin, final boolean userWrap, final boolean showInvisibles)");
+		console.log("ENTER AceEditor.startEditorNative()");
 
 		if ($wnd.ace == undefined) {
 			$wnd
@@ -271,10 +270,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         }
 
         console.log("\t\tEnabling Spell Checking");
-        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative();
+        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
 
-		console
-				.log("EXIT AceEditor.startEditorNative(final String text, final String themeName, final String shortModeName, final boolean readOnly, final boolean useSoftTabs, final int tabSize, final boolean hScrollBarAlwaysVisible, final boolean showGutter, final boolean highlightSelectedWord, final boolean showPrintMargin, final boolean userWrap, final boolean showInvisibles)");
+		console.log("EXIT AceEditor.startEditorNative()");
 
     }-*/;
     
@@ -330,8 +328,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			editor.resize();
 			editor.focus();
 		} else {
-			console
-					.log("editor == null. redisplay() was not called successfully.");
+			console.log("editor == null. redisplay() was not called successfully.");
 		}
     }-*/;
 
@@ -343,8 +340,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.destroy();
 		} else {
-			console
-					.log("editor == null. destory() was not called successfully.");
+			console.log("editor == null. destory() was not called successfully.");
 		}
     }-*/;
     
@@ -363,8 +359,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.setShowInvisibles(showInvisibles);
 		} else {
-			console
-					.log("editor == null. setShowInvisiblesNative() was not called successfully.");
+			console.log("editor == null. setShowInvisiblesNative() was not called successfully.");
 		}
     }-*/;
 
@@ -394,8 +389,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     public native void setThemeByName(String themeName) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (editor != null)
+		if (editor != null) {
 			editor.setTheme("ace/theme/" + themeName);
+        }
     }-*/;
 
     /**
@@ -493,8 +489,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.getSession().setValue(text);
 		} else {
-			console
-					.log("editor == null. setTextNative() was not called successfully.");
+			console.log("editor == null. setTextNative() was not called successfully.");
 		}
     }-*/;
 
@@ -508,8 +503,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.insert(text);
 		} else {
-			console
-					.log("editor == null. insertAtCursor() was not called successfully.");
+			console.log("editor == null. insertAtCursor() was not called successfully.");
 		}
     }-*/;
 
@@ -524,8 +518,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			var pos = editor.getCursorPosition();
 			return this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::getCursorPositionImpl(DD)(pos.row, pos.column);
 		} else {
-			console
-					.log("editor == null. getCursorPosition() was not called successfully.");
+			console.log("editor == null. getCursorPosition() was not called successfully.");
 			return 0;
 		}
     }-*/;
@@ -544,8 +537,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.getSession().setUseSoftTabs(useSoftTabs);
 		} else {
-			console
-					.log("editor == null. setUseSoftTabsNative() was not called successfully.");
+			console.log("editor == null. setUseSoftTabsNative() was not called successfully.");
 		}
     }-*/;
 
@@ -564,8 +556,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.getSession().setTabSize(tabSize);
 		} else {
-			console
-					.log("editor == null. setTabSizeNative() was not called successfully.");
+			console.log("editor == null. setTabSizeNative() was not called successfully.");
 		}
     }-*/;
 
@@ -584,8 +575,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.gotoLine(line);
 		} else {
-			console
-					.log("editor == null. gotoLine() was not called successfully.");
+			console.log("editor == null. gotoLine() was not called successfully.");
 		}
     }-*/;
 
@@ -599,8 +589,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.renderer.setHScrollBarAlwaysVisible(hScrollBarAlwaysVisible);
 		} else {
-			console
-					.log("editor == null. setHScrollBarAlwaysVisible() was not called successfully.");
+			console.log("editor == null. setHScrollBarAlwaysVisible() was not called successfully.");
 		}
     }-*/;
 
@@ -619,8 +608,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.renderer.setShowGutter(showGutter);
 		} else {
-			console
-					.log("editor == null. setShowGutterNative() was not called successfully.");
+			console.log("editor == null. setShowGutterNative() was not called successfully.");
 		}
     }-*/;
 
@@ -636,8 +624,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private native void setReadOnlyNative(final boolean readOnly) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (editor != null)
+		if (editor != null) {
 			editor.setReadOnly(readOnly);
+        }
     }-*/;
 
     public void setReadOnly(final boolean readOnly) {
@@ -655,8 +644,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.setHighlightSelectedWord(highlightSelectedWord);
 		} else {
-			console
-					.log("editor == null. setHighlightSelectedWordNative() was not called successfully.");
+			console.log("editor == null. setHighlightSelectedWordNative() was not called successfully.");
 		}
     }-*/;
 
@@ -675,8 +663,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.renderer.setShowPrintMargin(showPrintMargin);
 		} else {
-			console
-					.log("editor == null. setShowPrintMarginNative() was not called successfully.");
+			console.log("editor == null. setShowPrintMarginNative() was not called successfully.");
 		}
     }-*/;
 
@@ -851,8 +838,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.getSession().setAnnotations(annotations);
 		} else {
-			console
-					.log("editor == null. setAnnotations() was not called successfully.");
+			console.log("editor == null. setAnnotations() was not called successfully.");
 		}
     }-*/;
 
@@ -864,8 +850,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
 			editor.getSession().clearAnnotations();
 		} else {
-			console
-					.log("editor == null. clearAnnotations() was not called successfully.");
+			console.log("editor == null. clearAnnotations() was not called successfully.");
 		}
 
 		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::resetAnnotations();
@@ -899,8 +884,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 	    editor.commands.removeCommand(command);
     } else
     {
-	    console
-	        .log("editor == null. removeCommandByName() was not called successfully.");
+	    console.log("editor == null. removeCommandByName() was not called successfully.");
     }
 	}-*/;
 
@@ -942,13 +926,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var selectedText = editor.getSession().getTextRange(range);
             editor.getSession().getDocument().replace(range, start + selectedText + end);
             
-            if (selectedText == "")
-            {
+            if (selectedText == "") {
                 editor.getSelection().moveCursorBy(0, -end.length);
             }
-        }
-        else
-        {
+        } else {
             console.log("editor == null. wrapSelection() was not called successfully.");
         }
     }-*/;
@@ -959,12 +940,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     public native void insertText(final String text)/*-{
     var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-        if (editor != null)
-        {
+        if (editor != null) {
             editor.insert(text);
-        }
-        else
-        {
+        } else {
             console.log("editor == null. insertText() was not called successfully.");
         }
     }-*/;
