@@ -752,6 +752,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 // remove all xml/html elements
                 var tagRe = /<.*?>/;
+                var tagMatch = null;
                 while ((tagMatch = line.match(tagRe)) != null) {
                     var tagLength = tagMatch[0].length;
                     var replacementString = "";
@@ -761,18 +762,31 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     line = line.replace(tagRe, replacementString);
                 }
 
+                // remove all xml/html entities
+                var entityRe = /&.*?;/;
+                var entityMatch = null;
+                while ((entityMatch = line.match(entityRe)) != null) {
+                    var entityLength = entityMatch[0].length;
+                    var replacementString = "";
+                    for (var i = 0; i < entityLength; ++i) {
+                        replacementString += " ";
+                    }
+                    line = line.replace(entityRe, replacementString);
+                }
+
                 var words = line.split(' ');
-                //var i = 0;
-                // skip initial whitespace
-                var match = line.match(/^\s+/);
-                var startingWhitespace = match != null ? match[0].length : 0;
-                var i = startingWhitespace;
+                var i = 0;
                 var bads = [];
                 for (word in words) {
                     var x = words[word] + "";
                     var checkWord = x.replace(/[^a-zA-Z']/g, '');
+
+                    // skip initial whitespace
+                    var match = x.match(/^\s+/);
+                    var startingWhitespace = match != null ? match[0].length : 0;
+
                     if (!dictionary.check(checkWord)) {
-                        bads[bads.length] = [i, i + words[word].length - startingWhitespace];
+                        bads[bads.length] = [i + startingWhitespace, i + words[word].length - startingWhitespace];
                     }
                     i += words[word].length + 1;
                 }
