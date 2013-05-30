@@ -703,6 +703,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     /**
      * Enable spell checking.
+     * This requires that the project that is including this artifact include typo.js and jquery in the main HTML file,
+     * as well as exposing the dictionaries in the locations identified by dicPath and affPath.
      */
     private native void enableSpellCheckingEnabledNative() /*-{
 
@@ -732,7 +734,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                         affData = data;
                     }).done(function() {
                             console.log("Dictionary loaded");
-                            dictionary = new Typo(lang, affData, dicData);
+                            dictionary = new $wnd.Typo(lang, affData, dicData);
                             enable_spellcheck();
                             spell_check();
                         });
