@@ -270,6 +270,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             editor.getSession().setValue(text);
         }
 
+        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative();
+
 		console
 				.log("EXIT AceEditor.startEditorNative(final String text, final String themeName, final String shortModeName, final boolean readOnly, final boolean useSoftTabs, final int tabSize, final boolean hScrollBarAlwaysVisible, final boolean showGutter, final boolean highlightSelectedWord, final boolean showPrintMargin, final boolean userWrap, final boolean showInvisibles)");
 
@@ -712,6 +714,112 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     public boolean getUserWrapMode() {
         return this.useWrap;
     }
+
+    /**
+     * Enable spell checking.
+     */
+    private native void enableSpellCheckingEnabledNative() /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+        if (editor == null) {
+            console.log("editor == null. setSpellCheckingEnabledNative() was not called successfully.");
+        }
+
+        // See https://github.com/swenson/ace_spell_check_js/blob/master/spellcheck_ace.js
+
+        var lang = "en_US";
+        var dicPath = "javascript/typojs/en_US.dic";
+        var affPath = "javascript/typojs/en_US.aff";
+
+        $("<style type='text/css'>.ace_marker-layer .misspelled { position: absolute; z-index: -2; border-bottom: 1px solid red; margin-bottom: -1px; }</style>").appendTo("head");
+        $("<style type='text/css'>.misspelled { border-bottom: 1px solid red; margin-bottom: -1px; }</style>").appendTo("head");
+
+        var dictionary = null;
+        $.get(dicPath, function(data) {
+            dicData = data;
+        }).done(function() {
+                $.get(affPath, function(data) {
+                    affData = data;
+                }).done(function() {
+                        console.log("Dictionary loaded");
+                        dictionary = new Typo(lang, affData, dicData);
+                        enable_spellcheck();
+                        spell_check();
+                    });
+            });
+
+        // Check the spelling of a line, and return [start, end]-pairs for misspelled words.
+        misspelled = function(line) {
+            var words = line.split(' ');
+            var i = 0;
+            var bads = [];
+            for (word in words) {
+                var x = words[word] + "";
+                var checkWord = x.replace(/[^a-zA-Z']/g, '');
+                if (!dictionary.check(checkWord)) {
+                    bads[bads.length] = [i, i + words[word].length];
+                }
+                i += words[word].length + 1;
+            }
+            return bads;
+        }
+
+        var contents_modified = true;
+        var currently_spellchecking = false;
+        var markers_present = [];
+
+        spell_check = function() {
+            // Wait for the dictionary to be loaded.
+            if (dictionary == null) {
+                return;
+            }
+
+            if (currently_spellchecking) {
+                return;
+            }
+
+            if (!contents_modified) {
+                return;
+            }
+            currently_spellchecking = true;
+            var session = editor.getSession();
+
+            // Clear the markers.
+            for (var i in markers_present) {
+                session.removeMarker(markers_present[i]);
+            }
+            markers_present = [];
+
+            try {
+                var Range = ace.require('ace/range').Range
+                var lines = session.getDocument().getAllLines();
+                for (var i in lines) {
+                    // Clear the gutter.
+                    session.removeGutterDecoration(i, "misspelled");
+                    // Check spelling of this line.
+                    var misspellings = misspelled(lines[i]);
+
+                    // Add markers and gutter markings.
+                    if (misspellings.length > 0) {
+                        session.addGutterDecoration(i, "misspelled");
+                    }
+                    for (var j in misspellings) {
+                        var range = new Range(i, misspellings[j][0], i, misspellings[j][1]);
+                        markers_present[markers_present.length] = session.addMarker(range, "misspelled", "typo", true);
+                    }
+                }
+            } finally {
+                currently_spellchecking = false;
+                contents_modified = false;
+            }
+        }
+
+        editor.getSession().on('change', function(e) {
+            contents_modified = true;
+        });
+        setInterval(spell_check, 500);
+
+    }-*/;
 
     /**
      * Add an annotation to a the local <code>annotations</code> JsArray<AceAnnotation>, but does not set it on the editor
