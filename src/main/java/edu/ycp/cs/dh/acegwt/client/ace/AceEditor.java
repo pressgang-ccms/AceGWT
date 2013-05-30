@@ -786,6 +786,18 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     line = line.replace(urlRe, replacementString);
                 }
 
+                // remove all numbers
+                var numberRe = /\b\d+\b/;
+                var numberMatch = null;
+                while ((numberMatch = line.match(numberRe)) != null) {
+                    var numberLength = numberMatch[0].length;
+                    var replacementString = "";
+                    for (var i = 0; i < numberLength; ++i) {
+                        replacementString += " ";
+                    }
+                    line = line.replace(numberRe, replacementString);
+                }
+
                 var words = line.split(' ');
                 var i = 0;
                 var bads = [];
