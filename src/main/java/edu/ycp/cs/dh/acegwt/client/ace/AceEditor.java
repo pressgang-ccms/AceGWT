@@ -774,12 +774,24 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     line = line.replace(entityRe, replacementString);
                 }
 
+                // remove all urls
+                var urlRe = /\b((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/i;
+                var urlMatch = null;
+                while ((urlMatch = line.match(urlRe)) != null) {
+                    var urlLength = urlMatch[0].length;
+                    var replacementString = "";
+                    for (var i = 0; i < urlLength; ++i) {
+                        replacementString += " ";
+                    }
+                    line = line.replace(urlRe, replacementString);
+                }
+
                 var words = line.split(' ');
                 var i = 0;
                 var bads = [];
                 for (word in words) {
                     var x = words[word] + "";
-                    var checkWord = x.replace(/[^a-zA-Z']/g, '');
+                    var checkWord = x.replace(/[^a-zA-Z0-9']/g, '');
 
                     // skip initial whitespace
                     var match = x.match(/^\s+/);
