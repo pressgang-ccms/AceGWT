@@ -176,14 +176,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		console.log("ENTER AceEditor.startEditorNative()");
 
 		if ($wnd.ace == undefined) {
-			$wnd
-					.alert("window.ace is undefined! Please make sure you have included the appropriate JavaScript files.");
+			$wnd.alert("window.ace is undefined! Please make sure you have included the appropriate JavaScript files.");
 			return;
 		}
 
 		console.log("\tAssign ACE editor variable");
-		var editor = $wnd.ace
-				.edit(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId);
+		var editor = $wnd.ace.edit(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId);
 		editor.getSession().setUseWorker(false);
 		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = editor;
 
@@ -723,14 +721,14 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var dicPath = "javascript/typojs/en_US.dic";
             var affPath = "javascript/typojs/en_US.aff";
 
-            $("<style type='text/css'>.ace_marker-layer .misspelled { position: absolute; z-index: -2; border-bottom: 1px solid red; margin-bottom: -1px; }</style>").appendTo("head");
-            $("<style type='text/css'>.misspelled { border-bottom: 1px solid red; margin-bottom: -1px; }</style>").appendTo("head");
+            $wnd.jQuery("<style type='text/css'>.ace_marker-layer .misspelled { position: absolute; z-index: -2; border-bottom: 1px solid red; margin-bottom: -1px; }</style>").appendTo("head");
+            $wnd.jQuery("<style type='text/css'>.misspelled { border-bottom: 1px solid red; margin-bottom: -1px; }</style>").appendTo("head");
 
             var dictionary = null;
-            $.get(dicPath, function(data) {
+            $wnd.jQuery.get(dicPath, function(data) {
                 dicData = data;
             }).done(function() {
-                    $.get(affPath, function(data) {
+                    $wnd.jQuery.get(affPath, function(data) {
                         affData = data;
                     }).done(function() {
                             console.log("Dictionary loaded");
