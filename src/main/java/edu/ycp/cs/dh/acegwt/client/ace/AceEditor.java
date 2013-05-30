@@ -750,7 +750,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             // Check the spelling of a line, and return [start, end]-pairs for misspelled words.
             misspelled = function(line) {
                 var words = line.split(' ');
-                var i = 0;
+                //var i = 0;
+                // skip initial whitespace
+                var i = line.match(/^\s+/)[0].length
                 var bads = [];
                 for (word in words) {
                     var x = words[word] + "";
@@ -799,9 +801,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                         var misspellings = misspelled(lines[i]);
 
                         // Add markers and gutter markings.
-                        if (misspellings.length > 0) {
-                            session.addGutterDecoration(i, "misspelled");
-                        }
+                        //if (misspellings.length > 0) {
+                            //session.addGutterDecoration(i, "misspelled");
+                        //}
                         for (var j in misspellings) {
                             var range = new Range(i, misspellings[j][0], i, misspellings[j][1]);
                             markers_present[markers_present.length] = session.addMarker(range, "misspelled", "typo", true);
