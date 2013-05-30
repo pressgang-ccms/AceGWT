@@ -749,16 +749,30 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             // Check the spelling of a line, and return [start, end]-pairs for misspelled words.
             misspelled = function(line) {
+
+                // remove all xml/html elements
+                var tagRe = /<.*?>/;
+                while ((tagMatch = line.match(tagRe)) != null) {
+                    var tagLength = tagMatch[0].length;
+                    var replacementString = "";
+                    for (var i = 0; i < tagLength; ++i) {
+                        replacementString += " ";
+                    }
+                    line = line.replace(tagRe, replacementString);
+                }
+
                 var words = line.split(' ');
                 //var i = 0;
                 // skip initial whitespace
-                var i = line.match(/^\s+/)[0].length
+                var match = line.match(/^\s+/);
+                var startingWhitespace = match != null ? match[0].length : 0;
+                var i = startingWhitespace;
                 var bads = [];
                 for (word in words) {
                     var x = words[word] + "";
                     var checkWord = x.replace(/[^a-zA-Z']/g, '');
                     if (!dictionary.check(checkWord)) {
-                        bads[bads.length] = [i, i + words[word].length];
+                        bads[bads.length] = [i, i + words[word].length - startingWhitespace];
                     }
                     i += words[word].length + 1;
                 }
