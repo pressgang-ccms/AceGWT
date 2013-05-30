@@ -786,7 +786,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     var startingWhitespace = match != null ? match[0].length : 0;
 
                     if (!dictionary.check(checkWord)) {
-                        bads[bads.length] = [i + startingWhitespace, i + words[word].length - startingWhitespace];
+                        bads[bads.length] = [i + startingWhitespace, i + words[word].length];
                     }
                     i += words[word].length + 1;
                 }
