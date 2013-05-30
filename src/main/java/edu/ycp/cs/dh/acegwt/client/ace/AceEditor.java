@@ -726,6 +726,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             $wnd.jQuery("<style type='text/css'>.ace_marker-layer .misspelled { position: absolute; z-index: -2; border-bottom: 1px solid red; margin-bottom: -1px; }</style>").appendTo("head");
             $wnd.jQuery("<style type='text/css'>.misspelled { border-bottom: 1px solid red; margin-bottom: -1px; }</style>").appendTo("head");
 
+            var enable_spellcheck = function() {
+                editor.getSession().on('change', function(e) {
+                    contents_modified = true;
+                });
+                setInterval(spell_check, 500);
+            }
+
             var dictionary = null;
             $wnd.jQuery.get(dicPath, function(data) {
                 dicData = data;
@@ -783,7 +790,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 markers_present = [];
 
                 try {
-                    var Range = ace.require('ace/range').Range
+                    var Range = $wnd.ace.require('ace/range').Range
                     var lines = session.getDocument().getAllLines();
                     for (var i in lines) {
                         // Clear the gutter.
@@ -806,10 +813,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 }
             }
 
-            editor.getSession().on('change', function(e) {
-                contents_modified = true;
-            });
-            setInterval(spell_check, 500);
+
 
         } finally {
             console.log("EXIT AceEditor.enableSpellCheckingEnabledNative()");
