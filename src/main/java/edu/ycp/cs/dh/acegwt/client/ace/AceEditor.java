@@ -723,8 +723,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var dicPath = "javascript/typojs/en_US.dic";
             var affPath = "javascript/typojs/en_US.aff";
 
-            $wnd.jQuery("<style type='text/css'>.ace_marker-layer .misspelled { position: absolute; z-index: -2; border-bottom: 1px solid red; margin-bottom: -1px; }</style>").appendTo("head");
-            $wnd.jQuery("<style type='text/css'>.misspelled { border-bottom: 1px solid red; margin-bottom: -1px; }</style>").appendTo("head");
+            $wnd.jQuery("<style type='text/css'>.ace_marker-layer .misspelled { position: absolute; z-index: -2; background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
+            $wnd.jQuery("<style type='text/css'>.misspelled { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
 
             var enable_spellcheck = function() {
                 editor.getSession().on('change', function(e) {
@@ -786,9 +786,14 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     var startingWhitespace = match != null ? match[0].length : 0;
 
                     if (!dictionary.check(checkWord)) {
-                        bads[bads.length] = [i + startingWhitespace, i + words[word].length];
+                        var start = i + startingWhitespace;
+                        var end = i + x.length;
+
+                        if (start < end) {
+                            bads[bads.length] = [start, end];
+                        }
                     }
-                    i += words[word].length + 1;
+                    i += x.length + 1;
                 }
                 return bads;
             }
