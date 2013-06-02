@@ -49,10 +49,19 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private final String elementId;
 
     private JavaScriptObject editor;
-    
-//    private JavaScriptObject userWrapTimeout;
 
     private JavaScriptObject spellcheckInterval;
+
+    /**
+     * Used to detect when the contents of the editor have been modified.
+     */
+    private JavaScriptObject contentsModified;
+
+    private JavaScriptObject currentlySpellchecking;
+
+    private JavaScriptObject dictionary;
+
+    private JavaScriptObject markersPresent;
 
     private JsArray<AceAnnotation> annotations = JavaScriptObject.createArray().cast();
     
@@ -243,20 +252,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 		// Set wrapping. 
 		console.log("\t\tSetting User Wrap");
-
-//        var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
-//		if (timeout != null)
-//        {
-//            timeout.clearTimeout();
-//            timeout = null;
-//        }
         
         editor.getSession().setUseWrapMode(false);
         
-        if (userWrap)
-        {
-            // If wrapping is true, Chrome 23 will lock up if the value is set straight away, so use a timer to set it after a short delay
-//            timeout = setTimeout(function(){editor.getSession().setUseWrapMode(true);}, 100);
+        if (userWrap) {
             editor.getSession().setUseWrapMode(true);
         }
 
@@ -340,21 +339,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     public native void destroy() /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
         var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
-//        var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
 
 		if (editor != null) {
 			editor.destroy();
+            editor = null;
 
             // clean up pending operations
             if (spellcheckInterval != null) {
                 clearInterval(spellcheckInterval);
                 spellcheckInterval = null;
             }
-
-//            if (timeout != null) {
-//                timeout.clearTimeout();
-//                timeout = null;
-//            }
 		} else {
 			console.log("editor == null. destory() was not called successfully.");
 		}
@@ -695,13 +689,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private native void setUseWrapModeNative(final boolean userWrap) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-//		var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
-//
-//		if (timeout != null)
-//		{
-//		    timeout.clearTimeout();
-//		    timeout = null;
-//		}
 		
 		if (editor != null) {		    
 		    editor.getSession().setUseWrapMode(userWrap);
@@ -731,6 +718,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
+            var contentsModified = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contentsModified;
+            var dictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::dictionary;
+            var currentlySpellchecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::currentlySpellchecking;
+            var markersPresent = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::markersPresent;
 
             if (editor == null) {
                 console.log("editor == null. setSpellCheckingEnabledNative() was not called successfully.");
@@ -745,9 +736,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             $wnd.jQuery("<style type='text/css'>.ace_marker-layer .misspelled { position: absolute; z-index: -2; background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
             $wnd.jQuery("<style type='text/css'>.misspelled { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
 
-            var enable_spellcheck = function() {
+            contentsModified = true;
+
+            var enableSpellcheck = function() {
                 editor.getSession().on('change', function(e) {
-                    contents_modified = true;
+                    contentsModified = true;
                 });
 
                 if (spellcheckInterval != null) {
@@ -755,10 +748,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     spellcheckInterval = null;
                 }
 
-                spellcheckInterval = setInterval(spell_check, 500);
+                spellcheckInterval = setInterval(spellCheck, 500);
             }
 
-            var dictionary = null;
             $wnd.jQuery.get(dicPath, function(data) {
                 dicData = data;
             }).done(function() {
@@ -767,13 +759,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     }).done(function() {
                             console.log("Dictionary loaded");
                             dictionary = new $wnd.Typo(lang, affData, dicData);
-                            enable_spellcheck();
-                            spell_check();
+                            enableSpellcheck();
+                            spellCheck();
                         });
                 });
 
             // Check the spelling of a line, and return [start, end]-pairs for misspelled words.
-            misspelled = function(line) {
+            var misspelled = function(line) {
 
                 // remove all xml/html elements
                 var tagRe = /<.*?>/;
@@ -826,7 +818,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 var words = line.split(' ');
                 var i = 0;
                 var bads = [];
-                for (word in words) {
+                for (var word in words) {
                     var x = words[word] + "";
                     var checkWord = x.replace(/[^a-zA-Z0-9']/g, '');
 
@@ -847,34 +839,33 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 return bads;
             }
 
-            var contents_modified = true;
-            var currently_spellchecking = false;
-            var markers_present = [];
+            currentlySpellchecking = false;
+            markersPresent = [];
 
-            spell_check = function() {
+            spellCheck = function() {
                 // Wait for the dictionary to be loaded.
                 if (dictionary == null) {
                     return;
                 }
 
-                if (currently_spellchecking) {
+                if (currentlySpellchecking) {
                     return;
                 }
 
-                if (!contents_modified) {
+                if (!contentsModified) {
                     return;
                 }
-                currently_spellchecking = true;
+                currentlySpellchecking = true;
                 var session = editor.getSession();
 
                 // Clear the markers.
-                for (var i in markers_present) {
-                    session.removeMarker(markers_present[i]);
+                for (var i in markersPresent) {
+                    session.removeMarker(markersPresent[i]);
                 }
-                markers_present = [];
+                markersPresent = [];
 
                 try {
-                    var Range = $wnd.ace.require('ace/range').Range
+                    var Range = $wnd.ace.require('ace/range').Range;
                     var lines = session.getDocument().getAllLines();
                     for (var i in lines) {
                         // Clear the gutter.
@@ -888,12 +879,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                         //}
                         for (var j in misspellings) {
                             var range = new Range(i, misspellings[j][0], i, misspellings[j][1]);
-                            markers_present[markers_present.length] = session.addMarker(range, "misspelled", "typo", true);
+                            markersPresent[markersPresent.length] = session.addMarker(range, "misspelled", "typo", true);
                         }
                     }
                 } finally {
-                    currently_spellchecking = false;
-                    contents_modified = false;
+                    currentlySpellchecking = false;
+                    contentsModified = false;
                 }
             }
 
