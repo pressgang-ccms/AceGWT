@@ -831,7 +831,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     var match = x.match(/^\s+/);
                     var startingWhitespace = match != null ? match[0].length : 0;
 
-                    if (checkWord.length != 0 && !typoJs.@this.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord)) {
+                    if (checkWord.length != 0 && !typoJs.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord)) {
                         var start = i + startingWhitespace;
                         var end = i + x.length;
 
@@ -849,7 +849,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             spellCheck = function() {
                 // Wait for the dictionary to be loaded.
-                if (typoJs.@this.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()() == null) {
+                if (typoJs.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()() == null) {
                     return;
                 }
 
