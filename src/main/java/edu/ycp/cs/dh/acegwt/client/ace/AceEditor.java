@@ -733,10 +733,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         try {
             console.log("ENTER AceEditor.enableSpellCheckingEnabledNative()");
 
-            if ($wnd.jQuery == undefined) {
-                $wnd.alert("window.jQuery is undefined! Please make sure you have included the appropriate JavaScript files.");
-                return;
-            }
+
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
@@ -747,6 +744,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             if (editor == null) {
                 console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
+            }
+
+            if (typoJs == null) {
+                console.log("typoJs == null. Spell checking will not be enabled.");
             }
 
             // Add the CSS rules to highlight spelling errors

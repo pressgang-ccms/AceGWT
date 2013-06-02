@@ -18,6 +18,16 @@ public class TypoJS {
     }
 
     private native void loadDictionary() /*-{
+        if ($wnd.jQuery == undefined) {
+            $wnd.alert("window.jQuery is undefined! Please make sure you have included the appropriate JavaScript files.");
+            return;
+        }
+
+        if ($wnd.Typo == undefined) {
+            $wnd.alert("window.Typo is undefined! Please make sure you have included the appropriate JavaScript files.");
+            return;
+        }
+
         var dictionary = this.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::dictionary;
 
         var lang = "en_US";
