@@ -30,6 +30,7 @@ import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
+import edu.ycp.cs.dh.acegwt.client.typo.TypoJS;
 
 /**
  * A GWT widget for the Ajax.org Code Editor (ACE).
@@ -50,6 +51,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private JavaScriptObject editor;
 
+    private final TypoJS typoJs;
+
     private JavaScriptObject spellcheckInterval;
 
     /**
@@ -59,13 +62,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private JavaScriptObject currentlySpellchecking;
 
-    private JavaScriptObject dictionary;
-
     private JavaScriptObject markersPresent;
-
-    private JavaScriptObject dicData;
-
-    private JavaScriptObject affData;
 
     private JsArray<AceAnnotation> annotations = JavaScriptObject.createArray().cast();
     
@@ -122,12 +119,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     /**
      * This constructor will only work if the <code>.ace_editor</code> CSS class is set with
-     * <code>position: relative !important;</code>. A better idea is to use the {@link AceEditor#AceEditor(boolean)} constructor
+     * <code>position: relative !important;</code>. A better idea is to use the {@link AceEditor#AceEditor(boolean,TypoJS)} constructor
      * and pass it the value <code>true</code>; this will work without any changes to the <code>.ace_editor</code> class.
      */
     @Deprecated
-    public AceEditor() {
-        this(false);
+    public AceEditor(final TypoJS typoJs) {
+        this(false, typoJs);
     }
 
     /**
@@ -144,7 +141,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * @param positionAbsolute true if the <code>.ace_editor</code> CSS class is set with <code>position: absolute;</code>,
      *        which is the default; false if <code>.ace_editor</code> is set to use <code>position: relative;</code>
      */
-    public AceEditor(final boolean positionAbsolute) {
+    public AceEditor(final boolean positionAbsolute, final TypoJS typoJs) {
+        this.typoJs = typoJs;
+
         elementId = "_aceGWT" + nextId;
         nextId++;
 
@@ -346,9 +345,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
-            var dictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::dictionary;
-            var dicData = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::dicData;
-            var affData = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::affData;
+            var typoJs = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::typoJs;
 
             if (editor != null) {
 
@@ -357,10 +354,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 editor.destroy();
                 editor = null;
-
-                dicData = null;
-                affData = null;
-                dictionary = null;
+                typoJs = null;
 
                 // clean up pending operations
                 if (spellcheckInterval != null) {
@@ -747,52 +741,33 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
             var contentsModified = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contentsModified;
-            var dictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::dictionary;
+            var typoJs = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::typoJs;
             var currentlySpellchecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::currentlySpellchecking;
             var markersPresent = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::markersPresent;
-            var dicData = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::dicData;
-            var affData = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::affData;
 
             if (editor == null) {
-                console.log("editor == null. setSpellCheckingEnabledNative() was not called successfully.");
+                console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
             }
 
-            // See https://github.com/swenson/ace_spell_check_js/blob/master/spellcheck_ace.js
-
-            var lang = "en_US";
-            var dicPath = "javascript/typojs/en_US.dic";
-            var affPath = "javascript/typojs/en_US.aff";
-
+            // Add the CSS rules to highlight spelling errors
             $wnd.jQuery("<style type='text/css'>.ace_marker-layer .misspelled { position: absolute; z-index: -2; background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
             $wnd.jQuery("<style type='text/css'>.misspelled { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
 
             contentsModified = true;
 
-            var enableSpellcheck = function() {
-                editor.getSession().on('change', function(e) {
-                    contentsModified = true;
-                });
+            // Check for changes to the text
+            editor.getSession().on('change', function(e) {
+                contentsModified = true;
+            });
 
-                if (spellcheckInterval != null) {
-                    clearInterval(spellcheckInterval);
-                    spellcheckInterval = null;
-                }
-
-                spellcheckInterval = setInterval(spellCheck, 500);
+            // Enable spell checking on regular intervals
+            if (spellcheckInterval != null) {
+                clearInterval(spellcheckInterval);
+                spellcheckInterval = null;
             }
 
-            $wnd.jQuery.get(dicPath, function(data) {
-                dicData = data;
-            }).done(function() {
-                    $wnd.jQuery.get(affPath, function(data) {
-                        affData = data;
-                    }).done(function() {
-                            console.log("Dictionary loaded");
-                            dictionary = new $wnd.Typo(lang, affData, dicData);
-                            enableSpellcheck();
-                            spellCheck();
-                        });
-                });
+            spellcheckInterval = setInterval(spellCheck, 500);
+            spellCheck();
 
             // Check the spelling of a line, and return [start, end]-pairs for misspelled words.
             var misspelled = function(line) {
@@ -856,7 +831,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     var match = x.match(/^\s+/);
                     var startingWhitespace = match != null ? match[0].length : 0;
 
-                    if (checkWord.length != 0 && !dictionary.check(checkWord)) {
+                    if (checkWord.length != 0 && !typoJs.@this.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord)) {
                         var start = i + startingWhitespace;
                         var end = i + x.length;
 
@@ -874,7 +849,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             spellCheck = function() {
                 // Wait for the dictionary to be loaded.
-                if (dictionary == null) {
+                if (typoJs.@this.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()() == null) {
                     return;
                 }
 
