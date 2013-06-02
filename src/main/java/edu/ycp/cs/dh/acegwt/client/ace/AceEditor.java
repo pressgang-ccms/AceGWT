@@ -50,7 +50,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private JavaScriptObject editor;
     
-    private JavaScriptObject userWrapTimeout;
+//    private JavaScriptObject userWrapTimeout;
 
     private JavaScriptObject spellcheckInterval;
 
@@ -243,19 +243,21 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 		// Set wrapping. 
 		console.log("\t\tSetting User Wrap");
-		var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
-		if (timeout != null)
-        {
-            timeout.clearTimeout();
-            timeout = null;
-        }
+
+//        var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
+//		if (timeout != null)
+//        {
+//            timeout.clearTimeout();
+//            timeout = null;
+//        }
         
         editor.getSession().setUseWrapMode(false);
         
         if (userWrap)
         {
             // If wrapping is true, Chrome 23 will lock up if the value is set straight away, so use a timer to set it after a short delay
-            timeout = setTimeout(function(){editor.getSession().setUseWrapMode(true);}, 100);
+//            timeout = setTimeout(function(){editor.getSession().setUseWrapMode(true);}, 100);
+            editor.getSession().setUseWrapMode(true);
         }
 
 		// Show invisibles
@@ -338,7 +340,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     public native void destroy() /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
         var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
-        var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
+//        var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
 
 		if (editor != null) {
 			editor.destroy();
@@ -349,10 +351,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 spellcheckInterval = null;
             }
 
-            if (timeout != null) {
-                timeout.clearTimeout();
-                timeout = null;
-            }
+//            if (timeout != null) {
+//                timeout.clearTimeout();
+//                timeout = null;
+//            }
 		} else {
 			console.log("editor == null. destory() was not called successfully.");
 		}
@@ -693,13 +695,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private native void setUseWrapModeNative(final boolean userWrap) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
-		
-		if (timeout != null)
-		{
-		    timeout.clearTimeout();
-		    timeout = null;
-		}
+//		var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
+//
+//		if (timeout != null)
+//		{
+//		    timeout.clearTimeout();
+//		    timeout = null;
+//		}
 		
 		if (editor != null) {		    
 		    editor.getSession().setUseWrapMode(userWrap);
