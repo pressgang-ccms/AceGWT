@@ -63,6 +63,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private JavaScriptObject markersPresent;
 
+    private JavaScriptObject dicData;
+
+    private JavaScriptObject affData;
+
     private JsArray<AceAnnotation> annotations = JavaScriptObject.createArray().cast();
     
     private static final Logger logger = Logger.getLogger(AceEditor.class.getName());
@@ -337,21 +341,40 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * Cleans up the entire editor.
      */
     public native void destroy() /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-        var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
+		try {
+            console.log("ENTER AceEditor.destroy()");
 
-		if (editor != null) {
-			editor.destroy();
-            editor = null;
+            var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+            var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
+            var dictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::dictionary;
+            var dicData = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::dicData;
+            var affData = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::affData;
 
-            // clean up pending operations
-            if (spellcheckInterval != null) {
-                clearInterval(spellcheckInterval);
-                spellcheckInterval = null;
+            if (editor != null) {
+
+                //editor.getSession().removeAllListeners('change');
+                //editor.getSession().removeAllListeners('changeCursor');
+
+                editor.destroy();
+                editor = null;
+
+                dicData = null;
+                affData = null;
+                dictionary = null;
+
+                // clean up pending operations
+                if (spellcheckInterval != null) {
+                    clearInterval(spellcheckInterval);
+                    spellcheckInterval = null;
+                }
+            } else {
+                console.log("editor == null. destory() was not called successfully.");
             }
-		} else {
-			console.log("editor == null. destory() was not called successfully.");
-		}
+        } finally {
+            console.log("EXIT AceEditor.destroy()");
+        }
+
+
     }-*/;
     
     public native void focus() /*-{
@@ -461,7 +484,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     /**
      * Set font size.
      */
-    public native void setFontSize(String fontSize) /*-{
+    public native void setFontSize(final String fontSize) /*-{
 		var elementId = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId;
 		var elt = $doc.getElementById(elementId);
 		elt.style.fontSize = fontSize;
@@ -716,12 +739,19 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         try {
             console.log("ENTER AceEditor.enableSpellCheckingEnabledNative()");
 
+            if ($wnd.jQuery == undefined) {
+                $wnd.alert("window.jQuery is undefined! Please make sure you have included the appropriate JavaScript files.");
+                return;
+            }
+
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
             var contentsModified = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contentsModified;
             var dictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::dictionary;
             var currentlySpellchecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::currentlySpellchecking;
             var markersPresent = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::markersPresent;
+            var dicData = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::dicData;
+            var affData = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::affData;
 
             if (editor == null) {
                 console.log("editor == null. setSpellCheckingEnabledNative() was not called successfully.");
@@ -855,6 +885,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 if (!contentsModified) {
                     return;
                 }
+
+                console.log("Checking Spelling")
+
                 currentlySpellchecking = true;
                 var session = editor.getSession();
 
