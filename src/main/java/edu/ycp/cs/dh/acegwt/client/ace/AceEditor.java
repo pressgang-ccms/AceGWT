@@ -52,6 +52,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     
     private JavaScriptObject userWrapTimeout;
 
+    private JavaScriptObject spellcheckInterval;
+
     private JsArray<AceAnnotation> annotations = JavaScriptObject.createArray().cast();
     
     private static final Logger logger = Logger.getLogger(AceEditor.class.getName());
@@ -335,8 +337,22 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     public native void destroy() /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
+        var timeout = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::userWrapTimeout;
+
 		if (editor != null) {
 			editor.destroy();
+
+            // clean up pending operations
+            if (spellcheckInterval != null) {
+                clearInterval(spellcheckInterval);
+                spellcheckInterval = null;
+            }
+
+            if (timeout != null) {
+                timeout.clearTimeout();
+                timeout = null;
+            }
 		} else {
 			console.log("editor == null. destory() was not called successfully.");
 		}
@@ -712,6 +728,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             console.log("ENTER AceEditor.enableSpellCheckingEnabledNative()");
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+            var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
 
             if (editor == null) {
                 console.log("editor == null. setSpellCheckingEnabledNative() was not called successfully.");
@@ -730,7 +747,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 editor.getSession().on('change', function(e) {
                     contents_modified = true;
                 });
-                setInterval(spell_check, 500);
+
+                if (spellcheckInterval != null) {
+                    clearInterval(spellcheckInterval);
+                    spellcheckInterval = null;
+                }
+
+                spellcheckInterval = setInterval(spell_check, 500);
             }
 
             var dictionary = null;
