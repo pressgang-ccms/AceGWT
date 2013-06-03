@@ -55,15 +55,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private JavaScriptObject spellcheckInterval;
 
-    /**
-     * Used to detect when the contents of the editor have been modified.
-     */
-    private JavaScriptObject contentsModified;
-
-    private JavaScriptObject currentlySpellchecking;
-
-    private JavaScriptObject markersPresent;
-
     private JsArray<AceAnnotation> annotations = JavaScriptObject.createArray().cast();
     
     private static final Logger logger = Logger.getLogger(AceEditor.class.getName());
@@ -735,10 +726,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
-            var contentsModified = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contentsModified;
             var typoJs = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::typoJs;
-            var currentlySpellchecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::currentlySpellchecking;
-            var markersPresent = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::markersPresent;
 
             if (editor == null) {
                 console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
@@ -752,7 +740,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             $wnd.jQuery("<style type='text/css'>.ace_marker-layer .misspelled { position: absolute; z-index: -2; background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
             $wnd.jQuery("<style type='text/css'>.misspelled { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
 
-            contentsModified = true;
+            var contentsModified = true;
 
             // Check for changes to the text
             editor.getSession().on('change', function(e) {
@@ -834,8 +822,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 return bads;
             }
 
-            currentlySpellchecking = false;
-            markersPresent = [];
+            var currentlySpellchecking = false;
+            var markersPresent = [];
 
             spellCheck = function() {
                 // Wait for the dictionary to be loaded.
@@ -890,10 +878,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             // Enable spell checking on regular intervals
             if (spellcheckInterval != null) {
                 clearInterval(spellcheckInterval);
-                spellcheckInterval = null;
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = null;
             }
 
-            spellcheckInterval = setInterval(spellCheck, 500);
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = setInterval(spellCheck, 500);
             spellCheck();
 
         } finally {
