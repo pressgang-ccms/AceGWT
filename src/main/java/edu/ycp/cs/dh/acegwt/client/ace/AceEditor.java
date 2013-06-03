@@ -336,7 +336,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
-            var typoJs = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::typoJs;
 
             if (editor != null) {
 
@@ -344,13 +343,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 //editor.getSession().removeAllListeners('changeCursor');
 
                 editor.destroy();
-                editor = null;
-                typoJs = null;
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = null;
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::typoJs = null;
 
                 // clean up pending operations
                 if (spellcheckInterval != null) {
                     clearInterval(spellcheckInterval);
-                    spellcheckInterval = null;
+                    this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = null;
                 }
             } else {
                 console.log("editor == null. destory() was not called successfully.");
