@@ -19,7 +19,6 @@ public class TypoJS {
     }
 
     public boolean isLoaded() {
-        LOGGER.log(Level.INFO, "Check if dictionary is loaded");
         return dictionary != null;
     }
 
