@@ -729,10 +729,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             if (editor == null) {
                 console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
+                return;
             }
 
             if (typoJs == null) {
                 console.log("typoJs == null. Spell checking will not be enabled.");
+                return;
             }
 
             // Add the CSS rules to highlight spelling errors
@@ -826,7 +828,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             spellCheck = function() {
                 // Wait for the dictionary to be loaded.
-                if (!typoJs.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()()) {
+                var loaded = typoJs.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()();
+                if (!loaded) {
                     console.log("Waiting for dictionary to load.")
                     return;
                 }

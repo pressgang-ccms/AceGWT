@@ -2,10 +2,15 @@ package edu.ycp.cs.dh.acegwt.client.typo;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
     See https://github.com/swenson/ace_spell_check_js/blob/master/spellcheck_ace.js
  */
 public class TypoJS {
+
+    private static final Logger LOGGER = Logger.getLogger(TypoJS.class.getName());
 
     private JavaScriptObject dictionary;
 
@@ -14,6 +19,7 @@ public class TypoJS {
     }
 
     public boolean isLoaded() {
+        LOGGER.log(Level.INFO, "Check if dictionary is loaded");
         return dictionary != null;
     }
 
@@ -37,6 +43,9 @@ public class TypoJS {
         var affPath = "javascript/typojs/en_US.aff";
         var dicData, affData;
 
+        // keep a reference to this, so we can use it inside the closures below.
+        var me = this;
+
         $wnd.jQuery.get(dicPath, function(data) {
             dicData = data;
         }).done(function() {
@@ -44,7 +53,7 @@ public class TypoJS {
                     affData = data;
                 }).done(function() {
                         console.log("Dictionary Loaded");
-                        this.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::dictionary = new $wnd.Typo(lang, affData, dicData);
+                        me.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::dictionary = new $wnd.Typo(lang, affData, dicData);
                     });
             });
     }-*/;
