@@ -13,6 +13,10 @@ public class TypoJS {
         return dictionary;
     }
 
+    public boolean isLoaded() {
+        return dictionary != null;
+    }
+
     public TypoJS() {
         loadDictionary();
     }
@@ -28,8 +32,6 @@ public class TypoJS {
             return;
         }
 
-        var dictionary = this.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::dictionary;
-
         var lang = "en_US";
         var dicPath = "javascript/typojs/en_US.dic";
         var affPath = "javascript/typojs/en_US.aff";
@@ -42,7 +44,7 @@ public class TypoJS {
                     affData = data;
                 }).done(function() {
                         console.log("Dictionary Loaded");
-                        dictionary = new $wnd.Typo(lang, affData, dicData);
+                        this.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::dictionary = new $wnd.Typo(lang, affData, dicData);
                     });
             });
     }-*/;

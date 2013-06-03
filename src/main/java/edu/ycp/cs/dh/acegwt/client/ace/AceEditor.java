@@ -49,9 +49,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private final String elementId;
 
-    private JavaScriptObject editor;
-
     private final TypoJS typoJs;
+
+    private JavaScriptObject editor;
 
     private JavaScriptObject spellcheckInterval;
 
@@ -839,7 +839,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             spellCheck = function() {
                 // Wait for the dictionary to be loaded.
-                if (typoJs.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()() == null) {
+                if (!typoJs.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()()) {
                     console.log("Waiting for dictionary to load.")
                     return;
                 }
