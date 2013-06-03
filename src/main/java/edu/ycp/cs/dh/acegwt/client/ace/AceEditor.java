@@ -761,15 +761,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 contentsModified = true;
             });
 
-            // Enable spell checking on regular intervals
-            if (spellcheckInterval != null) {
-                clearInterval(spellcheckInterval);
-                spellcheckInterval = null;
-            }
-
-            spellcheckInterval = setInterval(spellCheck, 500);
-            spellCheck();
-
             // Check the spelling of a line, and return [start, end]-pairs for misspelled words.
             var misspelled = function(line) {
 
@@ -897,7 +888,14 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 }
             }
 
+            // Enable spell checking on regular intervals
+            if (spellcheckInterval != null) {
+                clearInterval(spellcheckInterval);
+                spellcheckInterval = null;
+            }
 
+            spellcheckInterval = setInterval(spellCheck, 500);
+            spellCheck();
 
         } finally {
             console.log("EXIT AceEditor.enableSpellCheckingEnabledNative()");
