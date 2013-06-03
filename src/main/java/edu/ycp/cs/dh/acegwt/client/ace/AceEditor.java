@@ -733,8 +733,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         try {
             console.log("ENTER AceEditor.enableSpellCheckingEnabledNative()");
 
-
-
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
             var contentsModified = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contentsModified;
@@ -842,6 +840,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             spellCheck = function() {
                 // Wait for the dictionary to be loaded.
                 if (typoJs.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()() == null) {
+                    console.log("Waiting for dictionary to load.")
                     return;
                 }
 

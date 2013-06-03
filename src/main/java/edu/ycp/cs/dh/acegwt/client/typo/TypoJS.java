@@ -33,13 +33,15 @@ public class TypoJS {
         var lang = "en_US";
         var dicPath = "javascript/typojs/en_US.dic";
         var affPath = "javascript/typojs/en_US.aff";
+        var dicData, affData;
 
         $wnd.jQuery.get(dicPath, function(data) {
-            var dicData = data;
+            dicData = data;
         }).done(function() {
                 $wnd.jQuery.get(affPath, function(data) {
-                    var affData = data;
+                    affData = data;
                 }).done(function() {
+                        console.log("Dictionary Loaded");
                         dictionary = new $wnd.Typo(lang, affData, dicData);
                     });
             });
