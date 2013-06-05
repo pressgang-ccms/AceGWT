@@ -267,6 +267,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         console.log("\t\tEnabling Spell Checking");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
 
+        console.log("\t\tEnabling Snippets");
+        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSnippets()();
+
 		console.log("EXIT AceEditor.startEditorNative()");
 
     }-*/;
@@ -712,6 +715,27 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     public boolean getUserWrapMode() {
         return this.useWrap;
     }
+
+    private native void enableSnippets() /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+        $wnd.define('acegwt', ['ace/snippets', 'ace/snippets/javascript'], function(require, exports, module) {
+
+            var snippetManager = $wnd.require("ace/snippets").snippetManager
+            var jsSnippets = $wnd.require("ace/snippets/javascript");
+            jsSnippets.snippets = snippetManager.parseSnippetFile(jsSnippets.snippetText);
+            snippetManager.register(jsSnippets.snippets, "xml")
+
+            editor.commands.bindKey("Tab", function(editor) {
+                var success = snippetManager.expandWithTab(editor);
+                if (!success)
+                    editor.execCommand("indent");
+            })
+
+        });
+
+        $wnd.require("acegwt");
+    }-*/;
 
     /**
      * Enable spell checking.
