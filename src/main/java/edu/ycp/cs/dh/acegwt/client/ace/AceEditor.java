@@ -719,22 +719,18 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private native void enableSnippets() /*-{
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
-        $wnd.define('acegwt', ['ace/snippets', 'ace/snippets/javascript'], function(require, exports, module) {
+        var snippetManager = $wnd.require("ace/snippets").snippetManager
+        var jsSnippets = $wnd.require("ace/snippets/javascript");
+        jsSnippets.snippets = snippetManager.parseSnippetFile(jsSnippets.snippetText);
+        snippetManager.register(jsSnippets.snippets, "xml")
 
-            var snippetManager = $wnd.require("ace/snippets").snippetManager
-            var jsSnippets = $wnd.require("ace/snippets/javascript");
-            jsSnippets.snippets = snippetManager.parseSnippetFile(jsSnippets.snippetText);
-            snippetManager.register(jsSnippets.snippets, "xml")
-
-            editor.commands.bindKey("Tab", function(editor) {
-                var success = snippetManager.expandWithTab(editor);
-                if (!success)
-                    editor.execCommand("indent");
-            })
-
+        editor.commands.bindKey("Tab", function(editor) {
+            var success = snippetManager.expandWithTab(editor);
+            if (!success) {
+                editor.execCommand("indent");
+            }
         });
 
-        $wnd.require("acegwt");
     }-*/;
 
     /**
