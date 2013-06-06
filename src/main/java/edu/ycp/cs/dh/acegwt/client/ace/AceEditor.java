@@ -828,7 +828,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 for (var word in words) {
                     var x = words[word] + "";
-                    var checkWord = x.replace(/[^a-zA-Z0-9']/g, '');
+                    var checkWord = x.replace(/[^a-zA-Z0-9'_-/\\]/g, '');
 
                     // skip initial whitespace
                     var match = x.match(/^\s+/);
@@ -836,27 +836,22 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                     if (checkWord.length != 0) {
 
-                        var positiveCheck = positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord);
+						var negativeCheck = negativeDictionary != null && negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord);
 
-                        if (!positiveCheck) {
+						if (negativeCheck) {
+                            var start = i + startingWhitespace;
+                            var end = i + x.length;
+
+                            if (start < end) {
+                                badWords[badWords.length] = [start, end];
+                            }
+						} else if (!positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord)) {
 
                             var start = i + startingWhitespace;
                             var end = i + x.length;
 
                             if (start < end) {
                                 misspelled[misspelled.length] = [start, end];
-                            }
-                        } else if (negativeDictionary != null) {
-                            var negativeCheck = negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord);
-
-                            if (negativeCheck) {
-
-                                var start = i + startingWhitespace;
-                                var end = i + x.length;
-
-                                if (start < end) {
-									badWords[badWords.length] = [start, end];
-                                }
                             }
                         }
                     }
