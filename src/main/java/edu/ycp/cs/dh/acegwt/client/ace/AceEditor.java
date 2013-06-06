@@ -780,8 +780,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				return output;
 			}
 
-			$wnd.jQuery(editor).contextMenu(function() {
-				var retValue = [];
+			$wnd.jQuery('#' + this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function() {
+
+				console.log("Right clicked on editor");
+
+                var retValue = [];
 
                 // account for the fact that the class may have been added without the necessary details
                 if (this.wordData.line != undefined && this.wordData.start != undefined && this.wordData.end != undefined) {
