@@ -782,26 +782,31 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 			$wnd.jQuery(editor).contextMenu(function() {
 				var retValue = [];
-				var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
-				var suggestions = dictionary.suggest(word);
 
-				for (var i = 0, _len = suggestions.length; i < _len; i++) {
-					var option = {};
-					var suggestion = suggestions[i];
-					option[suggestion]=function(suggestion, wordData){
-						return function(menuItem,menu){
-							editor.getSession().setValue(
-								replaceWord(
-									editor.getSession().getValue(),
-									wordData.line,
-									wordData.start,
-									wordData.end,
-									suggestion))
-						};
-					}(suggestion, this.wordData);
+                // account for the fact that the class may have been added without the necessary details
+                if (this.wordData.line != undefined && this.wordData.start != undefined && this.wordData.end != undefined) {
 
-                    retValue.push(option);
-				}
+                    var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
+                    var suggestions = dictionary.suggest(word);
+
+                    for (var i = 0, _len = suggestions.length; i < _len; i++) {
+                        var option = {};
+                        var suggestion = suggestions[i];
+                        option[suggestion]=function(suggestion, wordData){
+                            return function(menuItem,menu){
+                                editor.getSession().setValue(
+                                    replaceWord(
+                                        editor.getSession().getValue(),
+                                        wordData.line,
+                                        wordData.start,
+                                        wordData.end,
+                                        suggestion))
+                            };
+                        }(suggestion, this.wordData);
+
+                        retValue.push(option);
+                    }
+                }
 
 				return retValue;
 			}, {theme:'human', beforeShow: function() {
