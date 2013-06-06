@@ -758,10 +758,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             }
 
             // Add the CSS rules to highlight spelling errors
-            $wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='.misspelled'] { position: absolute; z-index: -2; background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
-            $wnd.jQuery("<style type='text/css'>div[class^='.misspelled'] { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
-			$wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='.badword'] { position: absolute; z-index: -2; background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
-			$wnd.jQuery("<style type='text/css'>div[class^='.badword'] { background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
+            $wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='misspelled'] { position: absolute; z-index: -2; background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
+            $wnd.jQuery("<style type='text/css'>div[class^='misspelled'] { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
+			$wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='badword'] { position: absolute; z-index: -2; background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
+			$wnd.jQuery("<style type='text/css'>div[class^='badword'] { background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
 
             // Setup the content menu
 			var replaceWord = function(original, line, start, end, replacement) {
@@ -787,7 +787,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 if (this.wordData.line != undefined && this.wordData.start != undefined && this.wordData.end != undefined) {
 
                     var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
-                    var suggestions = dictionary.suggest(word);
+                    var suggestions = positiveDictionary.suggest(word);
 
                     for (var i = 0, _len = suggestions.length; i < _len; i++) {
                         var option = {};
@@ -823,7 +823,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 								$wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= event.clientX &&
 								$wnd.jQuery(this).offset().top <= event.clientY &&
 								$wnd.jQuery(this).offset().top + $$wnd.jQuery(this).height() >= event.clientY) {
-								retValue = true;
+
+                                console.log("Right clicked on misspelt word");
+
+                                retValue = true;
 
 								var matches = /misspelled-(\d+)-(\d+)-(\d+)/.exec($wnd.jQuery(this).attr('class'));
                                 if (matches.length >= 4) {
