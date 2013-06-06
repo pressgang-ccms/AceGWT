@@ -822,10 +822,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 					function(wordData){
 						return function(){
 							// Collision detection code - see if the mouse was over a div with the misselled class
-                            if ($wnd.jQuery(this).offset().left <= event.clientX &&
-								$wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= event.clientX &&
-								$wnd.jQuery(this).offset().top <= event.clientY &&
-								$wnd.jQuery(this).offset().top + $$wnd.jQuery(this).height() >= event.clientY) {
+                            if ($wnd.jQuery(this).offset().left <= $wnd.event.clientX &&
+								$wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= $wnd.event.clientX &&
+								$wnd.jQuery(this).offset().top <= $wnd.event.clientY &&
+								$wnd.jQuery(this).offset().top + $$wnd.jQuery(this).height() >= $wnd.event.clientY) {
 
                                 console.log("Right clicked on misspelt word");
 
