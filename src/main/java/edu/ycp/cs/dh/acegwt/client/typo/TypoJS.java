@@ -12,6 +12,10 @@ public class TypoJS {
 
     private static final Logger LOGGER = Logger.getLogger(TypoJS.class.getName());
 
+    private static final String DEFAULT_DIC = "javascript/typojs/en_US.dic";
+    private static final String DEFAULT_AFF = "javascript/typojs/en_US.aff";
+    private static final String DEFAULT_LANG = "en_US";
+
     private JavaScriptObject dictionary;
 
     public JavaScriptObject getDictionary() {
@@ -23,10 +27,14 @@ public class TypoJS {
     }
 
     public TypoJS() {
-        loadDictionary();
+        loadDictionary(DEFAULT_DIC, DEFAULT_AFF, DEFAULT_LANG);
     }
 
-    private native void loadDictionary() /*-{
+    public TypoJS(final String dicPath, final String affPath, final String lang) {
+        loadDictionary(dicPath == null ? DEFAULT_DIC : dicPath, affPath == null ? DEFAULT_AFF : affPath, lang == null ? DEFAULT_LANG : lang);
+    }
+
+    private native void loadDictionary(final String dicPath, final String affPath, final String lang) /*-{
         if ($wnd.jQuery == undefined) {
             $wnd.alert("window.jQuery is undefined! Please make sure you have included the appropriate JavaScript files.");
             return;
@@ -37,9 +45,6 @@ public class TypoJS {
             return;
         }
 
-        var lang = "en_US";
-        var dicPath = "javascript/typojs/en_US.dic";
-        var affPath = "javascript/typojs/en_US.aff";
         var dicData, affData;
 
         // keep a reference to this, so we can use it inside the closures below.

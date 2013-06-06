@@ -49,7 +49,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private final String elementId;
 
-    private final TypoJS typoJs;
+    private final TypoJS positiveDictionary;
+    private final TypoJS negativeDictionary;
 
     private JavaScriptObject editor;
 
@@ -114,8 +115,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * and pass it the value <code>true</code>; this will work without any changes to the <code>.ace_editor</code> class.
      */
     @Deprecated
-    public AceEditor(final TypoJS typoJs) {
-        this(false, typoJs);
+    public AceEditor(final TypoJS positiveDictionary, final TypoJS negativeDictionary) {
+        this(false, positiveDictionary, negativeDictionary);
     }
 
     /**
@@ -132,8 +133,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * @param positionAbsolute true if the <code>.ace_editor</code> CSS class is set with <code>position: absolute;</code>,
      *        which is the default; false if <code>.ace_editor</code> is set to use <code>position: relative;</code>
      */
-    public AceEditor(final boolean positionAbsolute, final TypoJS typoJs) {
-        this.typoJs = typoJs;
+    public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary, final TypoJS negativeDictionary) {
+        this.positiveDictionary = positiveDictionary;
+        this.negativeDictionary = negativeDictionary;
 
         elementId = "_aceGWT" + nextId;
         nextId++;
@@ -347,7 +349,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 editor.destroy();
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = null;
-                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::typoJs = null;
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary = null;
 
                 // clean up pending operations
                 if (spellcheckInterval != null) {
@@ -719,10 +721,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private native void enableSnippets() /*-{
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
-        var snippetManager = $wnd.require("ace/snippets").snippetManager
-        var jsSnippets = $wnd.require("ace/snippets/javascript");
-        jsSnippets.snippets = snippetManager.parseSnippetFile(jsSnippets.snippetText);
-        snippetManager.register(jsSnippets.snippets, "xml")
+        var snippetManager = $wnd.require("ace/snippets").snippetManager;
 
         editor.commands.bindKey("Tab", function(editor) {
             var success = snippetManager.expandWithTab(editor);
@@ -745,14 +744,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
-            var typoJs = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::typoJs;
+            var positiveDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary;
+			var negativeDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::negativeDictionary;
 
             if (editor == null) {
                 console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
                 return;
             }
 
-            if (typoJs == null) {
+            if (positiveDictionary == null) {
                 console.log("typoJs == null. Spell checking will not be enabled.");
                 return;
             }
@@ -760,6 +760,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             // Add the CSS rules to highlight spelling errors
             $wnd.jQuery("<style type='text/css'>.ace_marker-layer .misspelled { position: absolute; z-index: -2; background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
             $wnd.jQuery("<style type='text/css'>.misspelled { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
+			$wnd.jQuery("<style type='text/css'>.ace_marker-layer .badword { position: absolute; z-index: -2; background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
+			$wnd.jQuery("<style type='text/css'>.badword { background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
 
             var contentsModified = true;
 
@@ -821,7 +823,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 var words = line.split(' ');
                 var i = 0;
-                var bads = [];
+                var misspelled = [];
+                var badWords = [];
+
                 for (var word in words) {
                     var x = words[word] + "";
                     var checkWord = x.replace(/[^a-zA-Z0-9']/g, '');
@@ -830,17 +834,35 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     var match = x.match(/^\s+/);
                     var startingWhitespace = match != null ? match[0].length : 0;
 
-                    if (checkWord.length != 0 && !typoJs.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord)) {
-                        var start = i + startingWhitespace;
-                        var end = i + x.length;
+                    if (checkWord.length != 0) {
 
-                        if (start < end) {
-                            bads[bads.length] = [start, end];
+                        var positiveCheck = positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord);
+
+                        if (!positiveCheck) {
+
+                            var start = i + startingWhitespace;
+                            var end = i + x.length;
+
+                            if (start < end) {
+                                misspelled[misspelled.length] = [start, end];
+                            }
+                        } else if (negativeDictionary != null) {
+                            var negativeCheck = negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord);
+
+                            if (negativeCheck) {
+
+                                var start = i + startingWhitespace;
+                                var end = i + x.length;
+
+                                if (start < end) {
+									badWords[badWords.length] = [start, end];
+                                }
+                            }
                         }
                     }
                     i += x.length + 1;
                 }
-                return bads;
+                return {misspelled: misspelled, badWords: badWords};
             }
 
             var currentlySpellchecking = false;
@@ -848,7 +870,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             spellCheck = function() {
                 // Wait for the dictionary to be loaded.
-                var loaded = typoJs.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()();
+                var loaded = positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()();
                 if (!loaded) {
                     console.log("Waiting for dictionary to load.")
                     return;
@@ -886,10 +908,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                         //if (misspellings.length > 0) {
                             //session.addGutterDecoration(i, "misspelled");
                         //}
-                        for (var j in misspellings) {
-                            var range = new Range(i, misspellings[j][0], i, misspellings[j][1]);
+                        for (var j in misspellings.misspelled) {
+                            var range = new Range(i, misspellings.misspelled[j][0], i, misspellings.misspelled[j][1]);
                             markersPresent[markersPresent.length] = session.addMarker(range, "misspelled", "typo", true);
                         }
+
+						for (var j in misspellings.badWords) {
+							var range = new Range(i, misspellings.badWords[j][0], i, misspellings.badWords[j][1]);
+							markersPresent[markersPresent.length] = session.addMarker(range, "badword", "typo", true);
+						}
                     }
                 } finally {
                     currentlySpellchecking = false;
