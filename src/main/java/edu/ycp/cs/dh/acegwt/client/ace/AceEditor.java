@@ -780,7 +780,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				return output;
 			}
 
-			$wnd.jQuery(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function(cmenu,t,callback) {
+			$wnd.jQuery('#' + this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function(cmenu,t,callback) {
 				var retValue = [];
 				var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
 				var found = false;
@@ -818,10 +818,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				$wnd.jQuery("div[class^='misspelled']").each(
 					function(wordData){
 						return function(){
-							if ($wnd.jQuery(this).offset().left <= event.clientX &&
-								$wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= event.clientX &&
-								$wnd.jQuery(this).offset().top <= event.clientY &&
-								$wnd.jQuery(this).offset().top + $wnd.jQuery(this).height() >= event.clientY) {
+							if ($wnd.jQuery(this).offset().left <= $wnd.event.clientX &&
+								$wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= $wnd.event.clientX &&
+								$wnd.jQuery(this).offset().top <= $wnd.event.clientY &&
+								$wnd.jQuery(this).offset().top + $wnd.jQuery(this).height() >= $wnd.event.clientY) {
 								retValue = true;
 
 								var matches = /misspelled-(\d+)-(\d+)-(\d+)/.exec($wnd.jQuery(this).attr('class'));
