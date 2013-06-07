@@ -784,7 +784,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				var retValue = [];
 				var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
 				var found = false;
-				dictionary.suggest(word, 5, function(wordData) {
+				positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()()(word, 5, function(wordData) {
 					return function(suggestions) {
 
 						for (var i = 0, _len = suggestions.length; i < _len; i++) {
