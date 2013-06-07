@@ -810,9 +810,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                             suggestion))
                                 };
                             }(suggestion, this.wordData);
+							retValue.push(option);
                         }
-
-                        retValue.push(option);
                     }
                 }
 
