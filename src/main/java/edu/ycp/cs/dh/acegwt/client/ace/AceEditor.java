@@ -790,20 +790,27 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
                     var suggestions = positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().suggest(word);
 
-                    for (var i = 0, _len = suggestions.length; i < _len; i++) {
-                        var option = {};
-                        var suggestion = suggestions[i];
-                        option[suggestion]=function(suggestion, wordData){
-                            return function(menuItem,menu){
-                                editor.getSession().setValue(
-                                    replaceWord(
-                                        editor.getSession().getValue(),
-                                        wordData.line,
-                                        wordData.start,
-                                        wordData.end,
-                                        suggestion))
-                            };
-                        }(suggestion, this.wordData);
+                    if (suggestions.length == 0) {
+						var option = {};
+                        option["No Suggestions"]=function(){};
+						retValue.push(option);
+                    } else {
+
+                        for (var i = 0, _len = suggestions.length; i < _len; i++) {
+                            var option = {};
+                            var suggestion = suggestions[i];
+                            option[suggestion]=function(suggestion, wordData){
+                                return function(menuItem,menu){
+                                    editor.getSession().setValue(
+                                        replaceWord(
+                                            editor.getSession().getValue(),
+                                            wordData.line,
+                                            wordData.start,
+                                            wordData.end,
+                                            suggestion))
+                                };
+                            }(suggestion, this.wordData);
+                        }
 
                         retValue.push(option);
                     }
