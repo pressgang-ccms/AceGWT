@@ -825,7 +825,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                             if ($wnd.jQuery(this).offset().left <= $wnd.event.clientX &&
 								$wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= $wnd.event.clientX &&
 								$wnd.jQuery(this).offset().top <= $wnd.event.clientY &&
-								$wnd.jQuery(this).offset().top + $$wnd.jQuery(this).height() >= $wnd.event.clientY) {
+								$wnd.jQuery(this).offset().top + $wnd.jQuery(this).height() >= $wnd.event.clientY) {
 
                                 console.log("Right clicked on misspelt word");
 
