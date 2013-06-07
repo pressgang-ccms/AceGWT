@@ -782,15 +782,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 			$wnd.jQuery('#' + this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function() {
 
-				console.log("Right clicked on editor");
-
                 var retValue = [];
 
                 // account for the fact that the class may have been added without the necessary details
                 if (this.wordData.line != undefined && this.wordData.start != undefined && this.wordData.end != undefined) {
 
                     var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
-                    var suggestions = positiveDictionary.getDictionary().suggest(word);
+                    var suggestions = positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().suggest(word);
 
                     for (var i = 0, _len = suggestions.length; i < _len; i++) {
                         var option = {};
@@ -826,8 +824,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 								$wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= $wnd.event.clientX &&
 								$wnd.jQuery(this).offset().top <= $wnd.event.clientY &&
 								$wnd.jQuery(this).offset().top + $wnd.jQuery(this).height() >= $wnd.event.clientY) {
-
-                                console.log("Right clicked on misspelt word");
 
                                 retValue = true;
 
