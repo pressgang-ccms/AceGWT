@@ -786,24 +786,29 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				var found = false;
 				positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().suggest(word, 5, function(wordData) {
 					return function(suggestions) {
-
-						for (var i = 0, _len = suggestions.length; i < _len; i++) {
+                        if (suggestions.length == 0) {
 							var option = {};
-							var suggestion = suggestions[i];
-							option[suggestion]=function(suggestion, wordData){
-								return function(menuItem,menu){
-									editor.getSession().setValue(
-										replaceWord(
-											editor.getSession().getValue(),
-											wordData.line,
-											wordData.start,
-											wordData.end,
-											suggestion))
-								};
-							}(suggestion, wordData);
-
+							option["No Suggestions"]=function(suggestion, wordData){};
 							retValue.push(option);
-						}
+                        } else {
+                            for (var i = 0, _len = suggestions.length; i < _len; i++) {
+                                var option = {};
+                                var suggestion = suggestions[i];
+                                option[suggestion]=function(suggestion, wordData){
+                                    return function(menuItem,menu){
+                                        editor.getSession().setValue(
+                                            replaceWord(
+                                                editor.getSession().getValue(),
+                                                wordData.line,
+                                                wordData.start,
+                                                wordData.end,
+                                                suggestion))
+                                    };
+                                }(suggestion, wordData);
+
+                                retValue.push(option);
+                            }
+                        }
 
 						callback(retValue);
 
