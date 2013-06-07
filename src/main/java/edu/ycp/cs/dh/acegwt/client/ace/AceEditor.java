@@ -790,7 +790,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 if (this.wordData.line != undefined && this.wordData.start != undefined && this.wordData.end != undefined) {
 
                     var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
-                    var suggestions = positiveDictionary.suggest(word);
+                    var suggestions = positiveDictionary.getDictionary().suggest(word);
 
                     for (var i = 0, _len = suggestions.length; i < _len; i++) {
                         var option = {};
