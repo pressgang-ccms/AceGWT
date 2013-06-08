@@ -942,14 +942,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     line = line.replace(numberRe, replacementString);
                 }
 
-                var words = line.split(' ');
+                // split on common punctuation
+                var words = line.split(/[.,!? :;"()]/);
                 var i = 0;
                 var misspelled = [];
                 var badWords = [];
 
                 for (var word in words) {
-                    var x = words[word] + "";
-                    var checkWord = x.replace(new RegExp("[^a-zA-Z0-9'_\\-]", "g"), '');
+                    var checkWord = words[word] + "";
+                    //var checkWord = (words[word] + "").replace(new RegExp("[^a-zA-Z0-9'_\\-]", "g"), '');
 
                     // skip initial whitespace
                     var match = x.match(/^\s+/);
