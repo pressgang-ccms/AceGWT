@@ -40,6 +40,11 @@ import edu.ycp.cs.dh.acegwt.client.typo.TypoJS;
  * 
  * The IsEditor interface has been implemented, to allow the ACE editor to bind to POJOs with the Editor framework. And
  * references to "require" have been removed.
+ *
+ * ace.js from the src or src-min builds (https://github.com/ajaxorg/ace-builds/), and resources for a slightly modified
+ * jquery conext menu (https://github.com/pressgang-ccms/PressGangCCMSUI/blob/Development/src/main/webapp/javascript/contextmenu) and
+ * typo.js (https://github.com/pressgang-ccms/PressGangCCMSUI/tree/Development/src/main/webapp/javascript/typojs) need
+ * to be added to the main GWT html file.
  * 
  * @see <a href="http://ace.ajax.org/">Ajax.org Code Editor</a>
  */
@@ -759,12 +764,14 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		if (editor != null) {
             var snippetManager = $wnd.require("ace/snippets").snippetManager;
 
-            editor.commands.bindKey("Tab", function(editor) {
-                var success = snippetManager.expandWithTab(editor);
-                if (!success) {
-                    editor.execCommand("indent");
-                }
-            });
+            if (snippetManager != null) {
+                editor.commands.bindKey("Tab", function(editor) {
+                    var success = snippetManager.expandWithTab(editor);
+                    if (!success) {
+                        editor.execCommand("indent");
+                    }
+                });
+            }
         } else {
 			console.log("editor == null. enableSnippets() was not called successfully.");
 		}
@@ -833,7 +840,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                             for (var i = 0, _len = suggestions.length; i < _len; i++) {
                                 var option = {};
                                 var suggestion = suggestions[i];
-                                option[suggestion]=function(suggestion, wordData){
+                                option[suggestion] = function(suggestion, wordData){
                                     return function(menuItem,menu){
 										var currentScroll = editor.getSession().getScrollTop();
                                         editor.getSession().setValue(
@@ -861,21 +868,28 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 				this.wordData = {};
 
-				$wnd.jQuery("div[class^='misspelled'] div[class^='badword']").each(
+				$wnd.jQuery("div[class^='misspelled'], div[class^='badword']").each(
 					function(wordData){
 						return function(){
 							if ($wnd.jQuery(this).offset().left <= event.clientX &&
 								$wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= event.clientX &&
 								$wnd.jQuery(this).offset().top <= event.clientY &&
 								$wnd.jQuery(this).offset().top + $wnd.jQuery(this).height() >= event.clientY) {
-								retValue = true;
 
-								var matches = /misspelled-(\d+)-(\d+)-(\d+)/.exec($wnd.jQuery(this).attr('class'));
-								if (matches.length >= 4) {
-									wordData['line'] = matches[1];
-									wordData['start'] = matches[2];
-									wordData['end'] = matches[3];
-								}
+                                var classAttribute = $wnd.jQuery(this).attr('class');
+
+                                if (classAttribute != null) {
+
+                                    var matches = /misspelled-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
+                                    if (matches.length >= 4) {
+
+										retValue = true;
+
+                                        wordData['line'] = matches[1];
+                                        wordData['start'] = matches[2];
+                                        wordData['end'] = matches[3];
+                                    }
+                                }
 
 							}
 						};
@@ -893,6 +907,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             // Check the spelling of a line, and return [start, end]-pairs for misspelled words.
             var misspelled = function(line) {
+
 
                 // remove all xml/html elements
                 var tagRe = /<.*?>/;
@@ -942,44 +957,36 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     line = line.replace(numberRe, replacementString);
                 }
 
-                // split on common punctuation
-                var words = line.split(/[.,!? :;"()]/);
+                // replace any character that doesn't make up a word with a space, and then split on space
+                var words = line.replace(/[^a-zA-Z0-9'\\-]/g, ' ').split(" ");
                 var i = 0;
                 var misspelled = [];
                 var badWords = [];
 
                 for (var word in words) {
-                    var checkWord = words[word] + "";
-                    //var checkWord = (words[word] + "").replace(new RegExp("[^a-zA-Z0-9'_\\-]", "g"), '');
+                    var checkWord = words[word];
 
                     // skip initial whitespace
-                    var match = x.match(/^\s+/);
+                    var match = checkWord.match(/^\s+/);
                     var startingWhitespace = match != null ? match[0].length : 0;
 
-                    if (checkWord.length != 0) {
+                    var start = i + startingWhitespace;
+                    var end = i + checkWord.length;
 
-						var negativeCheck = negativeDictionary != null && negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord);
+                    if (start < end && checkWord.trim().length != 0) {
 
-						if (negativeCheck) {
-                            var start = i + startingWhitespace;
-                            var end = i + x.length;
+                        var negativeCheck = negativeDictionary != null && negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim());
 
-                            if (start < end) {
-                                badWords[badWords.length] = [start, end];
-                            }
-						} else if (!positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord)) {
-
-                            var start = i + startingWhitespace;
-                            var end = i + x.length;
-
-                            if (start < end) {
-                                misspelled[misspelled.length] = [start, end];
-                            }
+                        if (negativeCheck) {
+                            badWords[badWords.length] = [start, end];
+                        } else if (!positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim())) {
+                            misspelled[misspelled.length] = [start, end];
                         }
                     }
-                    i += x.length + 1;
+                    i += checkWord.length + 1;
                 }
                 return {misspelled: misspelled, badWords: badWords};
+
             }
 
             var currentlySpellchecking = false;
@@ -1001,7 +1008,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     return;
                 }
 
-                console.log("Checking Spelling")
+                console.log("Checking Spelling");
 
                 currentlySpellchecking = true;
                 var session = editor.getSession();
@@ -1018,6 +1025,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     for (var i in lines) {
                         // Clear the gutter.
                         session.removeGutterDecoration(i, "misspelled");
+
                         // Check spelling of this line.
                         var misspellings = misspelled(lines[i]);
 
