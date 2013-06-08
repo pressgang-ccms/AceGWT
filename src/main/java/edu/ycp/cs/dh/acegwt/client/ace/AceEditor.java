@@ -33,20 +33,41 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import edu.ycp.cs.dh.acegwt.client.typo.TypoJS;
 
 /**
- * A GWT widget for the Ajax.org Code Editor (ACE).
- * 
- * Matthew Casperson - This class has been edited to remove the startEditor function. The ACE editor is created and destroyed
- * using the attach events, values for things like text, mode, theme etc are cached until the ACE editor is available.
- * 
- * The IsEditor interface has been implemented, to allow the ACE editor to bind to POJOs with the Editor framework. And
- * references to "require" have been removed.
- *
- * ace.js from the src or src-min builds (https://github.com/ajaxorg/ace-builds/), and resources for a slightly modified
- * jquery conext menu (https://github.com/pressgang-ccms/PressGangCCMSUI/blob/Development/src/main/webapp/javascript/contextmenu) and
- * typo.js (https://github.com/pressgang-ccms/PressGangCCMSUI/tree/Development/src/main/webapp/javascript/typojs) need
- * to be added to the main GWT html file.
- * 
- * @see <a href="http://ace.ajax.org/">Ajax.org Code Editor</a>
+  A GWT widget for the Ajax.org Code Editor (ACE).
+
+  Matthew Casperson - This class has been edited to remove the startEditor function. The ACE editor is created and destroyed
+  using the attach events, values for things like text, mode, theme etc are cached until the ACE editor is available.
+
+  The IsEditor interface has been implemented, to allow the ACE editor to bind to POJOs with the Editor framework. And
+  references to "require" have been removed.
+
+  Requirements:
+  * ace.js from the src or src-min builds (https://github.com/ajaxorg/ace-builds/)
+  * Resources for a slightly modified jQuery conext menu (https://github.com/pressgang-ccms/PressGangCCMSUI/blob/Development/src/main/webapp/javascript/contextmenu) and
+  * typo.js (https://github.com/pressgang-ccms/PressGangCCMSUI/tree/Development/src/main/webapp/javascript/typojs)
+  * styles for misspelt words:
+        .ace_marker-layer div[class^='misspelled'] {
+            position: absolute;
+            z-index: -2;
+            background-color:
+            rgba(255, 0, 0, 0.2);
+        }
+
+        div[class^='misspelled'] {
+            background-color: rgba(255, 0, 0, 0.2);
+        }
+
+        .ace_marker-layer div[class^='badword'] {
+            position: absolute;
+            z-index: -2;
+            background-color: rgba(245, 255, 0, 0.2);
+        }
+
+        div[class^='badword'] {
+            background-color: rgba(245, 255, 0, 0.2);
+        }
+
+  @see <a href="http://ace.ajax.org/">Ajax.org Code Editor</a>
  */
 public class AceEditor extends Composite implements RequiresResize, IsEditor<LeafValueEditor<String>> {
     // Used to generate unique element ids for Ace widgets.
@@ -881,7 +902,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 if (classAttribute != null) {
 
                                     var matches = /(misspelled)|(badword)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
-                                    if (matches != null) {
+                                    if (matches != null && matches.length >= 4) {
 
 										retValue = true;
 
