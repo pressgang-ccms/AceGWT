@@ -115,8 +115,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * and pass it the value <code>true</code>; this will work without any changes to the <code>.ace_editor</code> class.
      */
     @Deprecated
-    public AceEditor(final TypoJS positiveDictionary, final TypoJS negativeDictionary) {
-        this(false, positiveDictionary, negativeDictionary);
+    public AceEditor() {
+        this(false, null, null);
+    }
+
+    public AceEditor(final boolean positionAbsolute) {
+        this(positionAbsolute, null, null);
+    }
+
+    public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary) {
+        this(positionAbsolute, positiveDictionary, null);
     }
 
     /**
@@ -722,7 +730,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
 		if (editor != null) {
-			editor.getSession().getScrollTop()
+			editor.getSession().getScrollTop();
 		} else {
 			console.log("editor == null. getScrollTop() was not called successfully.");
             return 0;
@@ -733,7 +741,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
 		if (editor != null) {
-			editor.getSession().setScrollTop(scroll)
+			editor.getSession().setScrollTop(scroll);
 		} else {
 			console.log("editor == null. setScrollTop() was not called successfully.");
 		}
@@ -784,19 +792,19 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             }
 
             if (positiveDictionary == null) {
-                console.log("typoJs == null. Spell checking will not be enabled.");
+                console.log("positiveDictionary == null. Spell checking will not be enabled.");
                 return;
             }
 
             // Add the CSS rules to highlight spelling errors
-            $wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='misspelled'] { position: absolute; z-index: -2; background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
-            $wnd.jQuery("<style type='text/css'>div[class^='misspelled'] { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
-			$wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='badword'] { position: absolute; z-index: -2; background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
-			$wnd.jQuery("<style type='text/css'>div[class^='badword'] { background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
+            //$wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='misspelled'] { position: absolute; z-index: -2; background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
+            //$wnd.jQuery("<style type='text/css'>div[class^='misspelled'] { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
+			//$wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='badword'] { position: absolute; z-index: -2; background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
+			//$wnd.jQuery("<style type='text/css'>div[class^='badword'] { background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
 
             // Setup the content menu
 			var replaceWord = function(original, line, start, end, replacement) {
-				var lines = original.split("\n");
+                var lines = original.split("\n");
 				var output = "";
 				for (var i = 0, _len = lines.length; i < _len; ++i) {
 					if (i != line) {
@@ -827,13 +835,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 var suggestion = suggestions[i];
                                 option[suggestion]=function(suggestion, wordData){
                                     return function(menuItem,menu){
+										var currentScroll = editor.getSession().getScrollTop();
                                         editor.getSession().setValue(
                                             replaceWord(
                                                 editor.getSession().getValue(),
                                                 wordData.line,
                                                 wordData.start,
                                                 wordData.end,
-                                                suggestion))
+                                                suggestion));
+										editor.setSession().setScrollTop(currentScroll);
                                     };
                                 }(suggestion, wordData);
 
