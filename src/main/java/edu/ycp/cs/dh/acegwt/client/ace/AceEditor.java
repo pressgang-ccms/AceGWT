@@ -881,7 +881,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 if (classAttribute != null) {
 
                                     var matches = /(misspelled)|(badword)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
-                                    if (matches != null && matches.length >= 4) {
+                                    if (matches != null) {
 
 										retValue = true;
 
