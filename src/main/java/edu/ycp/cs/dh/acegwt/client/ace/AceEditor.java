@@ -843,7 +843,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                                 wordData.start,
                                                 wordData.end,
                                                 suggestion));
-										editor.setSession().setScrollTop(currentScroll);
+										editor.getSession().setScrollTop(currentScroll);
                                     };
                                 }(suggestion, wordData);
 
