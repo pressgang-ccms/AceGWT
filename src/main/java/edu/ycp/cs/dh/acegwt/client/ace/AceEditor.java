@@ -901,14 +901,14 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                                 if (classAttribute != null) {
 
-                                    var matches = /(misspelled)|(badword)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
-                                    if (matches != null && matches.length >= 4) {
+                                    var matches = /(misspelled|badword)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
+                                    if (matches != null && matches.length >= 5) {
 
 										retValue = true;
 
-                                        wordData['line'] = matches[1];
-                                        wordData['start'] = matches[2];
-                                        wordData['end'] = matches[3];
+                                        wordData['line'] = matches[2];
+                                        wordData['start'] = matches[3];
+                                        wordData['end'] = matches[4];
                                     }
                                 }
 
