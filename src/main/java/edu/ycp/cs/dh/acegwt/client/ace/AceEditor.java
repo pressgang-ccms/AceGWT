@@ -718,17 +718,48 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         return this.useWrap;
     }
 
+    public native int getScrollTop() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+		if (editor != null) {
+			editor.getSession().getScrollTop()
+		} else {
+			console.log("editor == null. getScrollTop() was not called successfully.");
+            return 0;
+		}
+    }-*/;
+
+    public native void setScrollTop(final int scroll) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+		if (editor != null) {
+			editor.getSession().setScrollTop(scroll)
+		} else {
+			console.log("editor == null. setScrollTop() was not called successfully.");
+		}
+	}-*/;
+
     private native void enableSnippets() /*-{
+
+		if ($wnd.require == undefined) {
+			$wnd.alert("window.require is undefined! Please make sure you have included the appropriate JavaScript files.");
+			return;
+		}
+
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
-        var snippetManager = $wnd.require("ace/snippets").snippetManager;
+		if (editor != null) {
+            var snippetManager = $wnd.require("ace/snippets").snippetManager;
 
-        editor.commands.bindKey("Tab", function(editor) {
-            var success = snippetManager.expandWithTab(editor);
-            if (!success) {
-                editor.execCommand("indent");
-            }
-        });
+            editor.commands.bindKey("Tab", function(editor) {
+                var success = snippetManager.expandWithTab(editor);
+                if (!success) {
+                    editor.execCommand("indent");
+                }
+            });
+        } else {
+			console.log("editor == null. enableSnippets() was not called successfully.");
+		}
 
     }-*/;
 
