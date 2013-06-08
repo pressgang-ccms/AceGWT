@@ -861,7 +861,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 				this.wordData = {};
 
-				$wnd.jQuery("div[class^='misspelled']").each(
+				$wnd.jQuery("div[class^='misspelled'] div[class^='badword']").each(
 					function(wordData){
 						return function(){
 							if ($wnd.jQuery(this).offset().left <= event.clientX &&
