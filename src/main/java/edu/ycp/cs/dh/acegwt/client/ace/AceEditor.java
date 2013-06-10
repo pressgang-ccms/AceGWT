@@ -847,12 +847,18 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				return output;
 			}
 
+			// This stops two context menus from being displayed
+            var processingSuggestions = false;
+
 			$wnd.jQuery('#' + this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function(cmenu,t,callback) {
 				var retValue = [];
 				var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
-				var found = false;
+				processingSuggestions = true;
+
 				positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().suggest(word, 5, function(wordData) {
-					return function(suggestions) {
+                    return function(suggestions) {
+						processingSuggestions = false;
+
                         if (suggestions.length == 0) {
 							var option = {};
 							option["No Suggestions"]=function(suggestion, wordData){};
@@ -884,39 +890,42 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 					};
 				}(this.wordData));
 			}, {theme:'human', beforeShow: function(event) {
+                if (!processingSuggestions) {
+                    var retValue = false;
 
-				var retValue = false;
+                    this.wordData = {};
 
-				this.wordData = {};
+                    $wnd.jQuery("div[class^='misspelled'], div[class^='badword']").each(
+                        function(wordData){
+                            return function(){
+                                if ($wnd.jQuery(this).offset().left <= event.clientX &&
+                                    $wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= event.clientX &&
+                                    $wnd.jQuery(this).offset().top <= event.clientY &&
+                                    $wnd.jQuery(this).offset().top + $wnd.jQuery(this).height() >= event.clientY) {
 
-				$wnd.jQuery("div[class^='misspelled'], div[class^='badword']").each(
-					function(wordData){
-						return function(){
-							if ($wnd.jQuery(this).offset().left <= event.clientX &&
-								$wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= event.clientX &&
-								$wnd.jQuery(this).offset().top <= event.clientY &&
-								$wnd.jQuery(this).offset().top + $wnd.jQuery(this).height() >= event.clientY) {
+                                    var classAttribute = $wnd.jQuery(this).attr('class');
 
-                                var classAttribute = $wnd.jQuery(this).attr('class');
+                                    if (classAttribute != null) {
 
-                                if (classAttribute != null) {
+                                        var matches = /(misspelled|badword)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
+                                        if (matches != null && matches.length >= 5) {
 
-                                    var matches = /(misspelled|badword)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
-                                    if (matches != null && matches.length >= 5) {
+                                            retValue = true;
 
-										retValue = true;
-
-                                        wordData['line'] = matches[2];
-                                        wordData['start'] = matches[3];
-                                        wordData['end'] = matches[4];
+                                            wordData['line'] = matches[2];
+                                            wordData['start'] = matches[3];
+                                            wordData['end'] = matches[4];
+                                        }
                                     }
+
                                 }
+                            };
+                        }(this.wordData));
 
-							}
-						};
-					}(this.wordData));
-
-				return retValue;
+                    return retValue;
+                } else {
+                    return false;
+                }
 			}});
 
             var contentsModified = true;
