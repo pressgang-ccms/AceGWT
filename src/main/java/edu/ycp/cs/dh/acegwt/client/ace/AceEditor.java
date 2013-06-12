@@ -1165,7 +1165,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 							var range = new Range(i, misspellings.badPhrases[j][0], i, misspellings.badPhrases[j][1]);
 							markersPresent[markersPresent.length] = session.addMarker(
 								range,
-								"badPhrase-" + i + "-" + misspellings.badPhrases[j][0] + "-" + misspellings.badPhrases[j][1],
+								"badphrase-" + i + "-" + misspellings.badPhrases[j][0] + "-" + misspellings.badPhrases[j][1],
 								"typo",
 								true);
 						}
