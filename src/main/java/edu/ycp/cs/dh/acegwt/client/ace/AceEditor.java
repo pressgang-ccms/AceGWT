@@ -1061,7 +1061,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 							if (wordConsumed) {
                                 // Words will only fall into one dictionary item. Here we make sure that any words in this negative
                                 // match don't get used again.
-                                for (var checkWordIndex = wordIndex; checkWordIndex < wordIndex + wordGroupIndex - 1; ++checkWordIndex) {
+                                for (var checkWordIndex = wordIndex; checkWordIndex < wordIndex + wordGroupIndex; ++checkWordIndex) {
                                     testedWords[checkWordIndex] = true;
                                 }
                             }
