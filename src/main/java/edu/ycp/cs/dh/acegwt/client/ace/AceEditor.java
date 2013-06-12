@@ -1041,6 +1041,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 						var endMatch = checkWord.match(/[^a-zA-Z0-9]+$/);
 						var endingWhitespace = endMatch != null ? endMatch[0].length : 0;
 
+                        // subtract firstWordLengthWithSpace to account for the fact that it was added
+                        // at the start of the loop
 						var start = i + startingWhitespace - firstWordLengthWithSpace;
 						var end = i + checkWord.length - firstWordLengthWithSpace - endingWhitespace;
 
