@@ -77,6 +77,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private final TypoJS positiveDictionary;
     private final TypoJS negativeDictionary;
+    private final TypoJS negativePhraseDictionary;
 
     private JavaScriptObject editor;
 
@@ -142,15 +143,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     @Deprecated
     public AceEditor() {
-        this(false, null, null);
+        this(false, null, null, null);
     }
 
     public AceEditor(final boolean positionAbsolute) {
-        this(positionAbsolute, null, null);
+        this(positionAbsolute, null, null, null);
     }
 
     public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary) {
-        this(positionAbsolute, positiveDictionary, null);
+        this(positionAbsolute, positiveDictionary, null, null);
     }
 
     /**
@@ -167,9 +168,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * @param positionAbsolute true if the <code>.ace_editor</code> CSS class is set with <code>position: absolute;</code>,
      *        which is the default; false if <code>.ace_editor</code> is set to use <code>position: relative;</code>
      */
-    public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary, final TypoJS negativeDictionary) {
+    public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary, final TypoJS negativeDictionary, final TypoJS negativePhraseDictionary) {
         this.positiveDictionary = positiveDictionary;
         this.negativeDictionary = negativeDictionary;
+        this.negativePhraseDictionary = negativePhraseDictionary;
 
         elementId = "_aceGWT" + nextId;
         nextId++;
@@ -813,6 +815,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
             var positiveDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary;
 			var negativeDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::negativeDictionary;
+			var negativePhraseDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::negativePhraseDictionary;
 
             if (editor == null) {
                 console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
@@ -895,7 +898,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                     this.wordData = {};
 
-                    $wnd.jQuery("div[class^='misspelled']").each(
+                    $wnd.jQuery("div[class^='misspelled'], div[class^='badword']").each(
                         function(wordData){
                             return function(){
                                 if ($wnd.jQuery(this).offset().left <= event.clientX &&
@@ -993,6 +996,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 var misspelled = [];
                 var badWords = [];
+                var badPhrases = [];
                 var testedWords = [];
 
 				for (var wordIndex = 0, wordCount = phraseWords.length; wordIndex < wordCount; ++wordIndex) {
@@ -1039,19 +1043,25 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 						if (start < end && checkWord.trim().length != 0) {
 
-							var negativeCheck = negativeDictionary != null && negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim());
+							var wordConsumed = false;
 
-							if (negativeCheck) {
-								badWords[badWords.length] = [start, end];
-
-                                // Words will only fall into one dictionary item. Here we make sure that any words in this negative
-                                // match don't get used again.
-								for (var checkWordIndex = wordIndex; checkWordIndex < wordIndex + wordGroupIndex - 1; ++checkWordIndex) {
-									testedWords[checkWordIndex] = true;
-								}
+                            if (negativePhraseDictionary != null && negativePhraseDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim())) {
+								wordConsumed = true;
+								badPhrases[badPhrases.length] = [start, end];
+                            } else if (negativeDictionary != null && negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim())) {
+								wordConsumed = true;
+                                badWords[badWords.length] = [start, end];
 							} else if (wordGroupIndex == 1 && !positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim())) {
 								misspelled[misspelled.length] = [start, end];
 							}
+
+							if (wordConsumed) {
+                                // Words will only fall into one dictionary item. Here we make sure that any words in this negative
+                                // match don't get used again.
+                                for (var checkWordIndex = wordIndex; checkWordIndex < wordIndex + wordGroupIndex - 1; ++checkWordIndex) {
+                                    testedWords[checkWordIndex] = true;
+                                }
+                            }
 
 
 						}
@@ -1081,7 +1091,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 //                    }
 //                    i += checkWord.length + 1;
 //                }
-                return {misspelled: misspelled, badWords: badWords};
+                return {misspelled: misspelled, badWords: badWords, badPhrases: badPhrases};
 
             }
 
@@ -1149,6 +1159,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 "badword-" + i + "-" + misspellings.badWords[j][0] + "-" + misspellings.badWords[j][1],
                                 "typo",
                                 true);
+						}
+
+						for (var j in misspellings.badPhrases) {
+							var range = new Range(i, misspellings.badPhrases[j][0], i, misspellings.badPhrases[j][1]);
+							markersPresent[markersPresent.length] = session.addMarker(
+								range,
+								"badPhrase-" + i + "-" + misspellings.badPhrases[j][0] + "-" + misspellings.badPhrases[j][1],
+								"typo",
+								true);
 						}
                     }
                 } finally {
