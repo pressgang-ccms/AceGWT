@@ -1034,15 +1034,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                             checkWord += checkArray[checkWordIndex];
 						}
 
-                        // we can have punctuation in the middle of a phrase, but not at the start and end
-					    checkWord = checkWord.replace(/[^a-zA-Z0-9]+$/, " ");
-						checkWord = checkWord.replace(/^[^a-zA-Z0-9]+/, " ");
-
-						// skip whitespace at the start and end of the word or phrase
-						var match = checkWord.match(/^\s+/);
+						// skip non word characters at the start and end of the word or phrase
+						var match = checkWord.match(/^[^a-zA-Z0-9]+/);
 						var startingWhitespace = match != null ? match[0].length : 0;
 
-						var endMatch = checkWord.match(/\s+$/);
+						var endMatch = checkWord.match(/[^a-zA-Z0-9]+$/);
 						var endingWhitespace = endMatch != null ? endMatch[0].length : 0;
 
 						var start = i + startingWhitespace - firstWordLengthWithSpace;
