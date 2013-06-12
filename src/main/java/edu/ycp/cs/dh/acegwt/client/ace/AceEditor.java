@@ -988,33 +988,90 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 }
 
                 // replace any character that doesn't make up a word with a space, and then split on space
+				var phraseWords = line.split(" ");
                 var words = line.replace(/[^a-zA-Z0-9'\\-]/g, ' ').split(" ");
-                var i = 0;
+
                 var misspelled = [];
                 var badWords = [];
+                var testedWords = [];
 
-                for (var word in words) {
-                    var checkWord = words[word];
-
-                    // skip initial whitespace
-                    var match = checkWord.match(/^\s+/);
-                    var startingWhitespace = match != null ? match[0].length : 0;
-
-                    var start = i + startingWhitespace;
-                    var end = i + checkWord.length;
-
-                    if (start < end && checkWord.trim().length != 0) {
-
-                        var negativeCheck = negativeDictionary != null && negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim());
-
-                        if (negativeCheck) {
-                            badWords[badWords.length] = [start, end];
-                        } else if (!positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim())) {
-                            misspelled[misspelled.length] = [start, end];
-                        }
-                    }
-                    i += checkWord.length + 1;
+				for (var wordIndex = 0, wordCount = phraseWords.length; wordIndex < wordCount; ++wordIndex) {
+					testedWords.push(false);
                 }
+
+                outerloop:
+                for (var wordGroupIndex = 5; wordGroupIndex > 0; --wordGroupIndex) {
+					var i = 0;
+
+                    // When checking single words, use the words array. Otherwise use the phraseWords array.
+                    var checkArray =  wordGroupIndex == 1 ? words : phraseWords;
+
+                    innerloop:
+                    for (var wordIndex = 0, wordCount = checkArray.length - wordGroupIndex + 1; wordIndex < wordCount; ++wordIndex) {
+						var checkWord = "";
+
+						for (var checkWordIndex = wordIndex; checkWordIndex < wordIndex + wordGroupIndex; ++checkWordIndex) {
+							if (testedWords[checkWordIndex]) {
+                                continue innerloop;
+                            }
+
+                            if (checkWordIndex != wordIndex) {
+								checkWord += " ";
+                            }
+                            checkWord += checkArray[checkWordIndex];
+						}
+
+						// skip initial whitespace
+						var match = checkWord.match(/^\s+/);
+						var startingWhitespace = match != null ? match[0].length : 0;
+
+						var start = i + startingWhitespace;
+						var end = i + checkWord.length;
+
+						if (start < end && checkWord.trim().length != 0) {
+
+							var negativeCheck = negativeDictionary != null && negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim());
+
+							if (negativeCheck) {
+								badWords[badWords.length] = [start, end];
+
+                                // Words will only fall into one dictionary item. Here we make sure that any words in this negative
+                                // match don't get used again.
+								for (var checkWordIndex = wordIndex; checkWordIndex < wordIndex + wordGroupIndex - 1; ++checkWordIndex) {
+									testedWords[checkWordIndex] = true;
+								}
+							} else if (wordGroupIndex == 1 && !positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim())) {
+								misspelled[misspelled.length] = [start, end];
+							}
+
+
+						}
+						i += checkWord.length + 1;
+					}
+                }
+
+//                for (var wordIndex = 0, wordCount = words.length; wordIndex < wordCount; ++wordIndex) {
+//                    var checkWord = words[wordIndex];
+//
+//                    // skip initial whitespace
+//                    var match = checkWord.match(/^\s+/);
+//                    var startingWhitespace = match != null ? match[0].length : 0;
+//
+//                    var start = i + startingWhitespace;
+//                    var end = i + checkWord.length;
+//
+//                    if (start < end && checkWord.trim().length != 0) {
+//
+//                        var negativeCheck = negativeDictionary != null && negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim());
+//
+//                        if (negativeCheck) {
+//                            badWords[badWords.length] = [start, end];
+//                        } else if (!positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim())) {
+//                            misspelled[misspelled.length] = [start, end];
+//                        }
+//                    }
+//                    i += checkWord.length + 1;
+//                }
                 return {misspelled: misspelled, badWords: badWords};
 
             }
