@@ -1050,7 +1050,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 
 						}
-						i += checkArray[checkWordIndex].length + 1;
+						i += checkArray[wordIndex].length + 1;
 					}
                 }
 
