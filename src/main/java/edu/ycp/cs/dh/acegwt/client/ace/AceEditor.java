@@ -991,8 +991,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 }
 
                 // replace any character that doesn't make up a word with a space, and then split on space
-				var phraseWords = line.split(" ");
-                var words = line.replace(/[^a-zA-Z0-9'\\-]/g, ' ').split(" ");
+				var phraseWords = line.split(/\s/);
+                var words = line.replace(/[^a-zA-Z0-9'\\-]/g, ' ').split(/\s/);
 
                 var misspelled = [];
                 var badWords = [];
@@ -1003,12 +1003,18 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 					testedWords.push(false);
                 }
 
+                // How many words can appear in a phrase that will be checked against
+                // the dictionaries
+                var maxWordsInPhrase = 7;
+
                 outerloop:
-                for (var wordGroupIndex = 7; wordGroupIndex > 0; --wordGroupIndex) {
+                for (var wordGroupIndex = maxWordsInPhrase; wordGroupIndex > 0; --wordGroupIndex) {
 					var i = 0;
 
                     // When checking single words, use the words array. Otherwise use the phraseWords array.
                     var checkArray =  wordGroupIndex == 1 ? words : phraseWords;
+
+                    var lastCheckedWord = 0;
 
                     innerloop:
                     for (var wordIndex = 0, wordCount = checkArray.length - wordGroupIndex + 1; wordIndex < wordCount; ++wordIndex) {
@@ -1017,11 +1023,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                         var firstWordLengthWithSpace = checkArray[wordIndex].length + 1;
                         i += firstWordLengthWithSpace;
 
+                        if (wordIndex < lastCheckedWord) {
+                            continue;
+                        }
+
                         var checkWord = "";
 
-						for (var checkWordIndex = wordIndex; checkWordIndex < wordIndex + wordGroupIndex; ++checkWordIndex) {
-							if (testedWords[checkWordIndex]) {
-                                continue innerloop;
+						for (var checkWordIndex = wordIndex, checkWordIndexMax = wordIndex + wordGroupIndex; checkWordIndex < checkWordIndexMax; ++checkWordIndex) {
+
+                            if (testedWords[checkWordIndex]) {
+								continue innerloop;
                             }
 
                             if (checkArray[checkWordIndex].length == 0) {
@@ -1063,14 +1074,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 							if (wordConsumed) {
                                 // Words will only fall into one dictionary item. Here we make sure that any words in this negative
                                 // match don't get used again.
-                                for (var checkWordIndex = wordIndex; checkWordIndex < wordIndex + wordGroupIndex; ++checkWordIndex) {
+                                for (var checkWordIndex = wordIndex, checkWordIndexMax = wordIndex + wordGroupIndex; checkWordIndex < checkWordIndexMax; ++checkWordIndex) {
                                     testedWords[checkWordIndex] = true;
                                 }
+
+								lastCheckedWord = wordIndex + wordGroupIndex;
                             }
-
-
 						}
-
 					}
                 }
 
