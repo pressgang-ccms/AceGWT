@@ -1000,7 +1000,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 }
 
                 outerloop:
-                for (var wordGroupIndex = 5; wordGroupIndex > 0; --wordGroupIndex) {
+                for (var wordGroupIndex = 7; wordGroupIndex > 0; --wordGroupIndex) {
 					var i = 0;
 
                     // When checking single words, use the words array. Otherwise use the phraseWords array.
@@ -1008,7 +1008,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                     innerloop:
                     for (var wordIndex = 0, wordCount = checkArray.length - wordGroupIndex + 1; wordIndex < wordCount; ++wordIndex) {
-						var checkWord = "";
+
+                        // do this here so the continues down below don't stop us incrementing the value
+                        var firstWordLengthWithSpace = checkArray[wordIndex].length + 1;
+                        i += firstWordLengthWithSpace;
+
+                        var checkWord = "";
 
 						for (var checkWordIndex = wordIndex; checkWordIndex < wordIndex + wordGroupIndex; ++checkWordIndex) {
 							if (testedWords[checkWordIndex]) {
@@ -1029,8 +1034,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 						var match = checkWord.match(/^\s+/);
 						var startingWhitespace = match != null ? match[0].length : 0;
 
-						var start = i + startingWhitespace;
-						var end = i + checkWord.length;
+						var start = i + startingWhitespace - firstWordLengthWithSpace;
+						var end = i + checkWord.length - firstWordLengthWithSpace;
 
 						if (start < end && checkWord.trim().length != 0) {
 
@@ -1050,7 +1055,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 
 						}
-						i += checkArray[wordIndex].length + 1;
+
 					}
                 }
 
