@@ -1015,6 +1015,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 continue innerloop;
                             }
 
+                            if (checkArray[checkWordIndex].length == 0) {
+								continue innerloop;
+                            }
+
                             if (checkWordIndex != wordIndex) {
 								checkWord += " ";
                             }
@@ -1046,7 +1050,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 
 						}
-						i += checkWord.length + 1;
+						i += checkArray[checkWordIndex].length + 1;
 					}
                 }
 
