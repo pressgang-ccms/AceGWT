@@ -1067,8 +1067,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                             } else if (negativeDictionary != null && negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim())) {
 								wordConsumed = true;
                                 badWords[badWords.length] = [start, end];
-							} else if (wordGroupIndex == 1 && !positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim())) {
-								misspelled[misspelled.length] = [start, end];
+							} else if (wordGroupIndex == 1) {
+                                // check for double words
+                                if (wordIndex < wordCount - 1 && checkArray[wordIndex+1] == checkWord)  {
+									// don't test the next word
+                                    testedWords[wordIndex] = testedWords[wordIndex + 1] = true;
+                                    // this is a bad phrase
+                                    badPhrases[badPhrases.length] = [start, end + checkArray[wordIndex+1].length + 1];
+                                } else if (!positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().check(checkWord.trim())) {
+								    misspelled[misspelled.length] = [start, end];
+                                }
 							}
 
 							if (wordConsumed) {
