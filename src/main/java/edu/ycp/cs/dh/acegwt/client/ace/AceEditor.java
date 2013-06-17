@@ -814,8 +814,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			return;
 		}
 
-		if (linenumbers == null) {
-			console.log("linenumbers == null. Gutter styles will not be modified.");
+		if (lineNumbers == null) {
+			console.log("lineNumbers == null. Gutter styles will not be modified.");
 			return;
 		}
 
@@ -831,8 +831,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			session.removeGutterDecoration(i, style);
 		}
 
-		for (var i = 0, lineNumbersLength = linenumbers.length; i < lineNumbersLength; ++i) {
-			session.addGutterDecoration(linenumbers[i], style);
+		for (var i = 0, lineNumbersLength = lineNumbers.length; i < lineNumbersLength; ++i) {
+			session.addGutterDecoration(lineNumbers[i], style);
 		}
     }-*/;
 
