@@ -803,10 +803,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     /**
      * Clears all existing gutter decorations, and adds the new ones
-     * @param linenumbers An array containing the line numbers to add the style to
+     * @param lineNumbers An array containing the line numbers to add the style to
      * @param style The style to clear and then add
      */
-    public native void clearAndAddGutterDecoration(final int[] linenumbers, final String style) /*-{
+    public native void clearAndAddGutterDecoration(final int[] lineNumbers, final String style) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
 		if (editor == null) {
@@ -827,11 +827,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		var session = editor.getSession();
 
 		var lines = session.getDocument().getAllLines();
-		for (var i = 0, lineCount = lines.length; i < linesLength; ++i) {
+		for (var i = 0, linesLength = lines.length; i < linesLength; ++i) {
 			session.removeGutterDecoration(i, style);
 		}
 
-		for (var i = 0, linenumbersCount = linenumbers.length; i < linenumbersCount; ++i) {
+		for (var i = 0, lineNumbersLength = linenumbers.length; i < lineNumbersLength; ++i) {
 			session.addGutterDecoration(linenumbers[i], style);
 		}
     }-*/;
@@ -1188,7 +1188,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     var lines = session.getDocument().getAllLines();
                     for (var i in lines) {
                         // Clear the gutter.
-                        session.removeGutterDecoration(i, "misspelled");
+                        //session.removeGutterDecoration(i, "misspelled");
 
                         // Check spelling of this line.
                         var misspellings = misspelled(lines[i]);
