@@ -827,7 +827,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		var session = editor.getSession();
 
 		var lines = session.getDocument().getAllLines();
-		for (var i in lines) {
+		for (var i = 0, lineCount = lines.length; i < linesLength; ++i) {
 			session.removeGutterDecoration(i, style);
 		}
 
