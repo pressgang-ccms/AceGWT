@@ -806,7 +806,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * @param linenumbers An array containing the line numbers to add the style to
      * @param style The style to clear and then add
      */
-    private native void clearAndAddGutterDecoration(final int[] linenumbers, final String style) /*-{
+    public native void clearAndAddGutterDecoration(final int[] linenumbers, final String style) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
 		if (editor == null) {
