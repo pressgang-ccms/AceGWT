@@ -802,6 +802,41 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     }-*/;
 
     /**
+     * Clears all existing gutter decorations, and adds the new ones
+     * @param linenumbers An array containing the line numbers to add the style to
+     * @param style The style to clear and then add
+     */
+    private native void clearAndAddGutterDecoration(final int[] linenumbers, final String style) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+		if (editor == null) {
+			console.log("editor == null. clearAndAddGutterDecoration() was not called successfully.");
+			return;
+		}
+
+		if (linenumbers == null) {
+			console.log("linenumbers == null. Gutter styles will not be modified.");
+			return;
+		}
+
+		if (style == null) {
+			console.log("style == null. Gutter styles will not be modified.");
+			return;
+		}
+
+		var session = editor.getSession();
+
+		var lines = session.getDocument().getAllLines();
+		for (var i in lines) {
+			session.removeGutterDecoration(i, style);
+		}
+
+		for (var i = 0, linenumbersCount = linenumbers.length; i < linenumbersCount; ++i) {
+			session.addGutterDecoration(linenumbers[i], style);
+		}
+    }-*/;
+
+    /**
      * Enable spell checking.
      * This requires that the project that is including this artifact include typo.js and jquery in the main HTML file,
      * as well as exposing the dictionaries in the locations identified by dicPath and affPath.
