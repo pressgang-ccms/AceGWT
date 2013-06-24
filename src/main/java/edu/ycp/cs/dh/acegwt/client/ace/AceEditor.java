@@ -135,6 +135,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * This value is used as a buffer to hold the "show invisible characters" state before the editor is created
      */
     private boolean showInvisibles = false;
+    /**
+     * The spell checking web worker
+     */
+    private JavaScriptObject spellCheckingWorker;
 
     /**
      * This constructor will only work if the <code>.ace_editor</code> CSS class is set with
@@ -377,6 +381,19 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
+            var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
+
+
+            // clean up pending operations
+            if (spellcheckInterval != null) {
+                clearInterval(spellcheckInterval);
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = null;
+            }
+
+            if (spellingWorker != null) {
+                spellingWorker.close();
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker = null;
+            }
 
             if (editor != null) {
 
@@ -387,11 +404,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = null;
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary = null;
 
-                // clean up pending operations
-                if (spellcheckInterval != null) {
-                    clearInterval(spellcheckInterval);
-                    this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = null;
-                }
+
             } else {
                 console.log("editor == null. destory() was not called successfully.");
             }
@@ -976,7 +989,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             });
 
             // Setup a worker to perform the spell checking, and handle the results
-            var spellingWorker = new Worker("javascript/typojs/checkspelling.js");
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker = new Worker("javascript/typojs/checkspelling.js");
+            var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
 			// Set the dictionaries.
             spellingWorker.postMessage({
 				positiveDictionary: positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()(),
