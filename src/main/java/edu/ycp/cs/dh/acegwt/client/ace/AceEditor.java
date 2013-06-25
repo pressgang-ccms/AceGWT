@@ -391,7 +391,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             }
 
             if (spellingWorker != null) {
-                spellingWorker.close();
+                spellingWorker.terminate();
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker = null;
             }
 
