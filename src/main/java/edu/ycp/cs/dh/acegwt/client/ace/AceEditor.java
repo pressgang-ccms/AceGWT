@@ -1041,7 +1041,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             spellCheck = function() {
                 // Wait for the dictionary to be loaded.
-                var loaded = positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()();
+                var loaded = positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()() &&
+                    negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()() &&
+                    negativePhraseDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()();
+
                 if (!loaded) {
                     console.log("Waiting for dictionary to load.")
                     return;
