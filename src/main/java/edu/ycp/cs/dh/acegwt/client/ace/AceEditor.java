@@ -1413,6 +1413,38 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             console.log("editor == null. wrapSelection() was not called successfully.");
         }
     }-*/;
+
+    /**
+     * Replaces the currently selected text
+     * @param replacement The string to replace the selection with
+     */
+    public native void replaceSelection(final String replacement)/*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		if (editor != null && start != null && end != null)
+		{
+			var range = editor.getSelectionRange();
+			editor.getSession().getDocument().replace(range, replacement);
+		} else {
+			console.log("editor == null. replaceSelection() was not called successfully.");
+		}
+	}-*/;
+
+    /**
+     * @return the currently selected text
+     */
+    public native String getSelection()/*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		if (editor != null && start != null && end != null)
+		{
+			var range = editor.getSelectionRange();
+			var selectedText = editor.getSession().getTextRange(range);
+			return selectedText;
+		} else {
+			console.log("editor == null. getSelection() was not called successfully.");
+		}
+
+        return null;
+	}-*/;
     
     /**
      * Insert text at the current cursor location
