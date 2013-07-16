@@ -937,7 +937,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                             if (suggestions.length == 0) {
                                 var option = {};
-                                option["No Suggestions"]=function(suggestion, wordData){};
+                                option["No Suggestions"]=function(menuItem,menu){};
                                 retValue.push(option);
                             } else {
                                 for (var i = 0, _len = suggestions.length; i < _len; i++) {
@@ -992,7 +992,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                         // echo the XML into an iframe
                                         var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdxmlData.value;
                                         var option = {};
-                                        option["<iframe style=\"width: 400px; height: 300px\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = function(suggestion, wordData){};
+                                        var optionDetails = {};
+                                        optionDetails["onclick"] = function(menuItem,menu){};
+										optionDetails["className"] = "ContextMenuIFrameParent";
+                                        optionDetails["disabled"] = true;
+                                        option["<iframe class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
                                         callback([option]);
                                     }
                                 });
@@ -1003,7 +1007,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     }
                 }
             }
-        }, {theme:'human', beforeShow: function(event) {
+        }, {theme:'osx', beforeShow: function(event) {
             if (!processingSuggestions) {
                 var retValue = false;
 
