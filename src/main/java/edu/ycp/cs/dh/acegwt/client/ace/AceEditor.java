@@ -994,6 +994,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 });
                             }
                         });
+
+                        callback(retValue);
                     }
                 }
             }
