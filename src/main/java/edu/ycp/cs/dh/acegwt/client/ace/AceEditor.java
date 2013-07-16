@@ -991,7 +991,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     success: function(holdxmlData) {
                                         // echo the XML into an iframe
                                         var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdxmlData.value;
-                                        callback(["<iframe style=\"width: 400px; height: 300px\" src=\"" + echoXMLRestUrl + "\"></iframe>"]);
+                                        var option = {};
+                                        option["<iframe style=\"width: 400px; height: 300px\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = function(suggestion, wordData){};
+                                        callback([option]);
                                     }
                                 });
                             }
