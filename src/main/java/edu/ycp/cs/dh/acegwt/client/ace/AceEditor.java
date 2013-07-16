@@ -984,7 +984,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     type: "POST",
                                     url: holdXMLRestUrl,
                                     data: "<?xml-stylesheet type='text/xsl' href='/pressgang-ccms-static/publican-docbook/html-single-renderonly.xsl'?>" + topicData.xml,
-                                    dataType: 'application/xml',
+                                    contentType: 'application/xml',
+                                    dataType: 'application/json',
                                     success: function(holdxmlData) {
                                         // echo the XML into an iframe
                                         var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdxmlData.value;
