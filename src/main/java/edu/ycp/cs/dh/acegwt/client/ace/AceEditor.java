@@ -1193,6 +1193,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var currentlyMatchingTags = false;
             var tagMarkersPresent = [];
             var tagContentsModified = true;
+            var loaded = false;
 
             // Check for changes to the text
             editor.getSession().on('change', function(e) {
@@ -1203,8 +1204,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker = new Worker("javascript/tagdb/tagdb.js");
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
-            // Set the tag db
-            tagMatchingWorker.postMessage({tagDB: tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getJSONDatabase()()});
 
             tagMatchingWorker.addEventListener('message', function(e){
                 try {
@@ -1255,6 +1254,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 if (!tagContentsModified) {
                     return;
+                }
+
+                if (!loaded) {
+                    // Set the tag db
+                    tagMatchingWorker.postMessage({tagDB: tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getJSONDatabase()()});
+                    loaded = true;
                 }
 
                 console.log("Matching Tags");
