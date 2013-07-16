@@ -1420,7 +1420,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     public native void replaceSelection(final String replacement)/*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (editor != null)
+		if (editor != null && replacement != null)
 		{
 			var range = editor.getSelectionRange();
 			editor.getSession().getDocument().replace(range, replacement);
