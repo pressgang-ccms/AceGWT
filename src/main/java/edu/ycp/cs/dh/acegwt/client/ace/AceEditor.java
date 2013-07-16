@@ -971,6 +971,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     var database = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getDatabase()();
                     var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
                     if (topicId != null) {
+						processingSuggestions = true;
                         var restServerCallback = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getGetRESTServerCallback()();
                         var restServer = restServerCallback.@edu.ycp.cs.dh.acegwt.client.tagdb.GetRESTServerCallback::getBaseRESTURL()();
 
@@ -979,6 +980,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                         $wnd.jQuery.ajax({
                             dataType: "json",
                             url: getTopicRestUrl,
+                            error: function() {processingSuggestions = false;},
                             success: function(topicData) {
                                 // hold the XML
                                 var holdXMLRestUrl = restServer + "/1/holdxml";
@@ -988,7 +990,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     data: "<?xml-stylesheet type='text/xsl' href='/pressgang-ccms-static/publican-docbook/html-single-renderonly.xsl'?>" + topicData.xml,
                                     contentType: 'application/xml',
                                     dataType: 'json',
+									error: function() {processingSuggestions = false;},
                                     success: function(holdxmlData) {
+										processingSuggestions = false;
+
                                         // echo the XML into an iframe
                                         var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdxmlData.value;
                                         var option = {};
