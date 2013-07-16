@@ -30,6 +30,7 @@ import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
+import edu.ycp.cs.dh.acegwt.client.tagdb.TagDB;
 import edu.ycp.cs.dh.acegwt.client.typo.TypoJS;
 
 /**
@@ -78,10 +79,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private final TypoJS positiveDictionary;
     private final TypoJS negativeDictionary;
     private final TypoJS negativePhraseDictionary;
+    private final TagDB tagDB;
 
     private JavaScriptObject editor;
 
     private JavaScriptObject spellcheckInterval;
+    private JavaScriptObject matchTagsInterval;
 
     private JsArray<AceAnnotation> annotations = JavaScriptObject.createArray().cast();
     
@@ -139,6 +142,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * The spell checking web worker
      */
     private JavaScriptObject spellCheckingWorker;
+    /**
+     * The tag matching web worker
+     */
+    private JavaScriptObject tagMatchingWorker;
 
     /**
      * This constructor will only work if the <code>.ace_editor</code> CSS class is set with
@@ -147,15 +154,23 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     @Deprecated
     public AceEditor() {
-        this(false, null, null, null);
+        this(false, null, null, null, null);
     }
 
     public AceEditor(final boolean positionAbsolute) {
-        this(positionAbsolute, null, null, null);
+        this(positionAbsolute, null, null, null, null);
     }
 
     public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary) {
-        this(positionAbsolute, positiveDictionary, null, null);
+        this(positionAbsolute, positiveDictionary, null, null, null);
+    }
+
+    public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary, final TypoJS negativeDictionary) {
+        this(positionAbsolute, positiveDictionary, negativeDictionary, null, null);
+    }
+
+    public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary, final TypoJS negativeDictionary, final TypoJS negativePhraseDictionary) {
+        this(positionAbsolute, positiveDictionary, negativeDictionary, negativePhraseDictionary, null);
     }
 
     /**
@@ -172,10 +187,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * @param positionAbsolute true if the <code>.ace_editor</code> CSS class is set with <code>position: absolute;</code>,
      *        which is the default; false if <code>.ace_editor</code> is set to use <code>position: relative;</code>
      */
-    public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary, final TypoJS negativeDictionary, final TypoJS negativePhraseDictionary) {
+    public AceEditor(final boolean positionAbsolute,
+                     final TypoJS positiveDictionary,
+                     final TypoJS negativeDictionary,
+                     final TypoJS negativePhraseDictionary,
+                     final TagDB tagDB) {
         this.positiveDictionary = positiveDictionary;
         this.negativeDictionary = negativeDictionary;
         this.negativePhraseDictionary = negativePhraseDictionary;
+        this.tagDB = tagDB;
 
         elementId = "_aceGWT" + nextId;
         nextId++;
@@ -307,6 +327,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         }
 
         console.log("\t\tEnabling Spell Checking");
+        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setupContextMenu()();
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
 
         console.log("\t\tEnabling Snippets");
@@ -381,7 +402,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
+            var matchTagsInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval;
             var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
+            var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
+
 
 
             // clean up pending operations
@@ -390,9 +414,20 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = null;
             }
 
+            // clean up pending operations
+            if (matchTagsInterval != null) {
+                clearInterval(matchTagsInterval);
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = null;
+            }
+
             if (spellingWorker != null) {
                 spellingWorker.terminate();
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker = null;
+            }
+
+            if (tagMatchingWorker != null) {
+                tagMatchingWorker.terminate();
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker = null;
             }
 
             if (editor != null) {
@@ -850,6 +885,158 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     }-*/;
 
     /**
+     * Initialize the context menu.
+     */
+    private native void setupContextMenu() /*-{
+
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        var positiveDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary;
+        var tagDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagDB;
+
+        if (editor == null) {
+            console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
+            return;
+        }
+
+        var replaceWord = function(original, line, start, end, replacement) {
+            var lines = original.split("\n");
+            var output = "";
+            for (var i = 0, _len = lines.length; i < _len; ++i) {
+                if (i != line) {
+                    output += lines[i] + (i == _len - 1 ? "" : "\n");
+                } else {
+                    output += lines[i].substring(0, start);
+                    output += replacement;
+                    output += lines[i].substring(end, lines[i].length) + (i == _len - 1 ? "" : "\n");
+                }
+            }
+
+            return output;
+        }
+
+        // This stops two context menus from being displayed
+        var processingSuggestions = false;
+
+        $wnd.jQuery('#' + this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function(cmenu,t,callback) {
+            var retValue = [];
+            var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
+
+            if (this.wordData.type == 'spelling') {
+                    if (positiveDictionary != null) {
+
+                    // Populate the context menu for the spelling options
+
+                    processingSuggestions = true;
+
+                    positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().suggest(word, 5, function(wordData) {
+                        return function(suggestions) {
+                            processingSuggestions = false;
+
+                            if (suggestions.length == 0) {
+                                var option = {};
+                                option["No Suggestions"]=function(suggestion, wordData){};
+                                retValue.push(option);
+                            } else {
+                                for (var i = 0, _len = suggestions.length; i < _len; i++) {
+                                    var option = {};
+                                    var suggestion = suggestions[i];
+                                    option[suggestion] = function(suggestion, wordData){
+                                        return function(menuItem,menu){
+                                            var currentScroll = editor.getSession().getScrollTop();
+                                            editor.getSession().setValue(
+                                                replaceWord(
+                                                    editor.getSession().getValue(),
+                                                    wordData.line,
+                                                    wordData.start,
+                                                    wordData.end,
+                                                    suggestion));
+                                            editor.getSession().setScrollTop(currentScroll);
+                                        };
+                                    }(suggestion, wordData);
+
+                                    retValue.push(option);
+                                }
+                            }
+
+                            callback(retValue);
+
+                        };
+                    }(this.wordData));
+                }
+            } else if (this.wordData.type == 'tag') {
+                if (tagDB != null) {
+                    var database = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getDatabase()();
+                    var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
+                    if (topicId != null) {
+                        var restServerCallback = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getGetRESTServerCallback()();
+                        var restServer = restServerCallback.@edu.ycp.cs.dh.acegwt.client.tagdb.GetRESTServerCallback::getBaseRESTURL()();
+
+                        // get the topic XML
+                        var getTopicRestUrl = restServer + "/1/topic/get/json/" + topicId;
+                        $wnd.jQuery.ajax({
+                            dataType: "json",
+                            url: getTopicRestUrl,
+                            success: function(topicData) {
+                                // hold the XML
+                                var holdXMLRestUrl = restServer + "/1/holdxml";
+                                $wnd.jQuery.ajax({
+                                    type: "POST",
+                                    url: holdXMLRestUrl,
+                                    data: "<?xml-stylesheet type='text/xsl' href='/pressgang-ccms-static/publican-docbook/html-single-renderonly.xsl'?>" + topicData.xml,
+                                    dataType: 'application/xml',
+                                    success: function(holdxmlData) {
+                                        // echo the XML into an iframe
+                                        var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdxmlData.value;
+                                        retValue.push("<iframe style=\"width: 400px; height: 300px\" src=\"" + echoXMLRestUrl + "\"></iframe>")
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+        }, {theme:'human', beforeShow: function(event) {
+            if (!processingSuggestions) {
+                var retValue = false;
+
+                this.wordData = {};
+
+                $wnd.jQuery("div[class^='misspelled'], div[class^='badword']").each(
+                    function(wordData){
+                        return function(){
+                            if ($wnd.jQuery(this).offset().left <= event.clientX &&
+                                $wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= event.clientX &&
+                                $wnd.jQuery(this).offset().top <= event.clientY &&
+                                $wnd.jQuery(this).offset().top + $wnd.jQuery(this).height() >= event.clientY) {
+
+                                var classAttribute = $wnd.jQuery(this).attr('class');
+
+                                if (classAttribute != null) {
+
+                                    var matches = /(misspelled|badword)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
+                                    if (matches != null && matches.length >= 5) {
+
+                                        retValue = true;
+
+                                        wordData['type'] = 'spelling';
+                                        wordData['line'] = matches[2];
+                                        wordData['start'] = matches[3];
+                                        wordData['end'] = matches[4];
+                                    }
+                                }
+
+                            }
+                        };
+                    }(this.wordData));
+
+                return retValue;
+            } else {
+                return false;
+            }
+        }});
+    }-*/;
+
+    /**
      * Enable spell checking.
      * This requires that the project that is including this artifact include typo.js and jquery in the main HTML file,
      * as well as exposing the dictionaries in the locations identified by dicPath and affPath.
@@ -880,104 +1067,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             //$wnd.jQuery("<style type='text/css'>div[class^='misspelled'] { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
 			//$wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='badword'] { position: absolute; z-index: -2; background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
 			//$wnd.jQuery("<style type='text/css'>div[class^='badword'] { background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
-
-            // Setup the content menu
-			var replaceWord = function(original, line, start, end, replacement) {
-                var lines = original.split("\n");
-				var output = "";
-				for (var i = 0, _len = lines.length; i < _len; ++i) {
-					if (i != line) {
-						output += lines[i] + (i == _len - 1 ? "" : "\n");
-					} else {
-						output += lines[i].substring(0, start);
-						output += replacement;
-						output += lines[i].substring(end, lines[i].length) + (i == _len - 1 ? "" : "\n");
-					}
-				}
-
-				return output;
-			}
-
-			// This stops two context menus from being displayed
-            var processingSuggestions = false;
-
-			$wnd.jQuery('#' + this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function(cmenu,t,callback) {
-				var retValue = [];
-				var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
-				processingSuggestions = true;
-
-				positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().suggest(word, 5, function(wordData) {
-                    return function(suggestions) {
-						processingSuggestions = false;
-
-                        if (suggestions.length == 0) {
-							var option = {};
-							option["No Suggestions"]=function(suggestion, wordData){};
-							retValue.push(option);
-                        } else {
-                            for (var i = 0, _len = suggestions.length; i < _len; i++) {
-                                var option = {};
-                                var suggestion = suggestions[i];
-                                option[suggestion] = function(suggestion, wordData){
-                                    return function(menuItem,menu){
-										var currentScroll = editor.getSession().getScrollTop();
-                                        editor.getSession().setValue(
-                                            replaceWord(
-                                                editor.getSession().getValue(),
-                                                wordData.line,
-                                                wordData.start,
-                                                wordData.end,
-                                                suggestion));
-										editor.getSession().setScrollTop(currentScroll);
-                                    };
-                                }(suggestion, wordData);
-
-                                retValue.push(option);
-                            }
-                        }
-
-						callback(retValue);
-
-					};
-				}(this.wordData));
-			}, {theme:'human', beforeShow: function(event) {
-                if (!processingSuggestions) {
-                    var retValue = false;
-
-                    this.wordData = {};
-
-                    $wnd.jQuery("div[class^='misspelled'], div[class^='badword']").each(
-                        function(wordData){
-                            return function(){
-                                if ($wnd.jQuery(this).offset().left <= event.clientX &&
-                                    $wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= event.clientX &&
-                                    $wnd.jQuery(this).offset().top <= event.clientY &&
-                                    $wnd.jQuery(this).offset().top + $wnd.jQuery(this).height() >= event.clientY) {
-
-                                    var classAttribute = $wnd.jQuery(this).attr('class');
-
-                                    if (classAttribute != null) {
-
-                                        var matches = /(misspelled|badword)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
-                                        if (matches != null && matches.length >= 5) {
-
-                                            retValue = true;
-
-                                            wordData['line'] = matches[2];
-                                            wordData['start'] = matches[3];
-                                            wordData['end'] = matches[4];
-                                        }
-                                    }
-
-                                }
-                            };
-                        }(this.wordData));
-
-                    return retValue;
-                } else {
-                    return false;
-                }
-			}});
 
             var contentsModified = true;
 			var currentlySpellchecking = false;
@@ -1053,14 +1142,14 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				}
             });
 
-            spellCheck = function() {
+            var spellCheck = function() {
                 // Wait for the dictionary to be loaded.
                 var loaded = positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()() &&
                     negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()() &&
                     negativePhraseDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()();
 
                 if (!loaded) {
-                    console.log("Waiting for dictionary to load.")
+                    console.log("Waiting for dictionary to load.");
                     return;
                 }
 
@@ -1093,6 +1182,97 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             console.log("EXIT AceEditor.enableSpellCheckingEnabledNative()");
         }
 
+    }-*/;
+
+    private native void enableTagMatching() /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        var tagDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagDB;
+
+        if (tagDB != null) {
+            var currentlyMatchingTags = false;
+            var markersPresent = [];
+            var contentsModified = true;
+
+            // Check for changes to the text
+            editor.getSession().on('change', function(e) {
+                contentsModified = true;
+            });
+
+            // Build the web worker to match tags
+
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker = new Worker("javascript/tagdb/tagdb.js");
+            var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
+            // Set the tag db
+            tagMatchingWorker.postMessage({tagDB: tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getJSONDatabase()()});
+
+            tagMatchingWorker.addEventListener('message', function(e){
+                try {
+                    if (editor == null) {
+                        return;
+                    }
+
+                    var lineData = e.data;
+
+                    var session = editor.getSession();
+
+                    // Clear the markers.
+                    for (var i in markersPresent) {
+                        session.removeMarker(markersPresent[i]);
+                    }
+                    markersPresent = [];
+
+                    var Range = $wnd.ace.require('ace/range').Range;
+
+                    for (var lineDataIndex = 0, lineDataLength = lineData.length; lineDataIndex < lineDataLength; ++lineDataIndex) {
+                        var tagMatches = lineData[lineDataIndex];
+
+                        for (var j in tagMatches) {
+                            var range = new Range(lineDataIndex, tagMatches[j][0], lineDataIndex, tagMatches[j][1]);
+                            markersPresent[markersPresent.length] = session.addMarker(
+                                range,
+                                "tagmatch-" + lineDataIndex + "-" + tagMatches[j][0] + "-" + tagMatches[j][1],
+                                "tagmatch",
+                                true);
+                        }
+
+                    }
+                } finally {
+                    currentlyMatchingTags = false;
+                }
+            });
+
+
+            var matchTags = function() {
+                if (!tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::isLoaded()()) {
+                    console.log("Waiting for tag database to load.");
+                    return;
+                }
+
+                if (currentlyMatchingTags) {
+                    return;
+                }
+
+                if (!contentsModified) {
+                    return;
+                }
+
+                console.log("Matching Tags");
+
+                currentlyMatchingTags = true;
+                contentsModified = false;
+
+                tagMatchingWorker.postMessage({lines: editor.getSession().getDocument().getAllLines()});
+            };
+
+            // Enable spell checking on regular intervals
+            if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval != null) {
+                clearInterval(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval);
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = null;
+            }
+
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = setInterval(matchTags, 500);
+            matchTags();
+        }
     }-*/;
 
     /**
