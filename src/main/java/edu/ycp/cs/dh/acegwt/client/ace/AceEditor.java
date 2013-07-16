@@ -919,11 +919,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         var processingSuggestions = false;
 
         $wnd.jQuery('#' + this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function(cmenu,t,callback) {
-            var retValue = [];
+
             var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
 
             if (this.wordData.type == 'spelling') {
                 if (positiveDictionary != null) {
+
+                    var retValue = [];
 
                     // Populate the context menu for the spelling options
 
@@ -989,8 +991,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     success: function(holdxmlData) {
                                         // echo the XML into an iframe
                                         var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdxmlData.value;
-                                        retValue.push("<iframe style=\"width: 400px; height: 300px\" src=\"" + echoXMLRestUrl + "\"></iframe>");
-                                        callback(retValue);
+                                        callback(["<iframe style=\"width: 400px; height: 300px\" src=\"" + echoXMLRestUrl + "\"></iframe>"]);
                                     }
                                 });
                             }
