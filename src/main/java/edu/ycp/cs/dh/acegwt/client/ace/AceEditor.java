@@ -923,7 +923,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
 
             if (this.wordData.type == 'spelling') {
-                    if (positiveDictionary != null) {
+                if (positiveDictionary != null) {
 
                     // Populate the context menu for the spelling options
 
@@ -1014,15 +1014,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                                 if (classAttribute != null) {
 
-                                    var matches = /(misspelled|badword)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
+                                    var matches = /(misspelled|badword|tagmatch)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
                                     if (matches != null && matches.length >= 5) {
 
                                         retValue = true;
 
-                                        wordData['type'] = 'spelling';
+                                        wordData['type'] = matches[1] == 'tagmatch' ? 'tag' : 'spelling';
                                         wordData['line'] = matches[2];
                                         wordData['start'] = matches[3];
                                         wordData['end'] = matches[4];
+
                                     }
                                 }
 
