@@ -1023,7 +1023,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                         wordData['line'] = matches[2];
                                         wordData['start'] = matches[3];
                                         wordData['end'] = matches[4];
-
                                     }
                                 }
 
@@ -1192,12 +1191,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
         if (tagDB != null) {
             var currentlyMatchingTags = false;
-            var markersPresent = [];
-            var contentsModified = true;
+            var tagMarkersPresent = [];
+            var tagContentsModified = true;
 
             // Check for changes to the text
             editor.getSession().on('change', function(e) {
-                contentsModified = true;
+                tagContentsModified = true;
             });
 
             // Build the web worker to match tags
@@ -1218,10 +1217,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     var session = editor.getSession();
 
                     // Clear the markers.
-                    for (var i in markersPresent) {
-                        session.removeMarker(markersPresent[i]);
+                    for (var i in tagMarkersPresent) {
+                        session.removeMarker(tagMarkersPresent[i]);
                     }
-                    markersPresent = [];
+                    tagMarkersPresent = [];
 
                     var Range = $wnd.ace.require('ace/range').Range;
 
@@ -1230,7 +1229,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                         for (var j in tagMatches) {
                             var range = new Range(lineDataIndex, tagMatches[j][0], lineDataIndex, tagMatches[j][1]);
-                            markersPresent[markersPresent.length] = session.addMarker(
+                            tagMarkersPresent[tagMarkersPresent.length] = session.addMarker(
                                 range,
                                 "tagmatch-" + lineDataIndex + "-" + tagMatches[j][0] + "-" + tagMatches[j][1],
                                 "tagmatch",
@@ -1254,14 +1253,14 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     return;
                 }
 
-                if (!contentsModified) {
+                if (!tagContentsModified) {
                     return;
                 }
 
                 console.log("Matching Tags");
 
                 currentlyMatchingTags = true;
-                contentsModified = false;
+                tagContentsModified = false;
 
                 tagMatchingWorker.postMessage({lines: editor.getSession().getDocument().getAllLines()});
             };
