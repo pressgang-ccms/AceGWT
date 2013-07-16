@@ -329,6 +329,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         console.log("\t\tEnabling Spell Checking");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setupContextMenu()();
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
+        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableTagMatching()();
 
         console.log("\t\tEnabling Snippets");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSnippets()();
