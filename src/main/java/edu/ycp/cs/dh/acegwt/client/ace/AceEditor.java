@@ -1088,6 +1088,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var contentsModified = true;
 			var currentlySpellchecking = false;
 			var markersPresent = [];
+            var dictionaryLoadedInWorker = false;
 
             // Check for changes to the text
             editor.getSession().on('change', function(e) {
@@ -1097,11 +1098,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             // Setup a worker to perform the spell checking, and handle the results
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker = new Worker("javascript/typojs/checkspelling.js");
             var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
-			// Set the dictionaries.
-            spellingWorker.postMessage({
-				positiveDictionary: positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()(),
-				negativeDictionary: negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()(),
-				negativePhraseDictionary: negativePhraseDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()()});
+
             spellingWorker.addEventListener('message', function(e){
 				try {
 					if (editor == null) {
@@ -1168,6 +1165,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 if (!loaded) {
                     console.log("Waiting for dictionary to load.");
                     return;
+                }
+
+				if (!dictionaryLoadedInWorker) {
+                    // Set the dictionaries.
+                    spellingWorker.postMessage({
+                        positiveDictionary: positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()(),
+                        negativeDictionary: negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()(),
+                        negativePhraseDictionary: negativePhraseDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()()});
+					dictionaryLoadedInWorker = true;
                 }
 
                 if (currentlySpellchecking) {
