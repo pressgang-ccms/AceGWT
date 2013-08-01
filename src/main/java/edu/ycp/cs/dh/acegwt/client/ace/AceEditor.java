@@ -139,6 +139,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private boolean showInvisibles = false;
     /**
+     * This value is used as a buffer to hold the theme state before the editor is created
+     */
+    private String themeName;
+    /**
      * The spell checking web worker
      */
     private JavaScriptObject spellCheckingWorker;
@@ -370,7 +374,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     {
         logger.log(Level.INFO, "ENTER AceEditor.onLoad()");
         super.onLoad();
-        startEditorNative(text, theme != null ? theme.getName() : null, mode != null ? mode.getName() : null,
+        startEditorNative(text, themeName, mode != null ? mode.getName() : null,
                 readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord,
                 showPrintMargin, useWrap, showInvisibles);
         logger.log(Level.INFO, "EXIT AceEditor.onLoad()");
@@ -496,6 +500,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     public native void setThemeByName(String themeName) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::themeName = themeName;
 		if (editor != null) {
 			editor.setTheme("ace/theme/" + themeName);
         }
