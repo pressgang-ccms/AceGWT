@@ -5,7 +5,7 @@ package edu.ycp.cs.dh.acegwt.client.tagdb;
  */
 public interface GetRESTServerCallback {
     /**
-     * @return The base URL of the REST enpoints.
+     * @return The base URL of the REST end points.
      */
     String getBaseRESTURL();
 }

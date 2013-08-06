@@ -1007,7 +1007,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 										optionDetails["className"] = "ContextMenuIFrameParent";
                                         optionDetails["disabled"] = true;
                                         option["<iframe class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
-                                        callback([option]);
+
+                                        var editOption = {};
+										var editOptionDetails = {};
+										editOptionDetails["onclick"] = function(menuItem,menu){
+                                            $wnd.open("#SearchResultsAndTopicView;query;topicIds=" + topicId);
+                                        };
+										editOption["Edit this topic"] = editOptionDetails;
+
+                                        callback([option, editOption]);
                                     }
                                 });
                             }
