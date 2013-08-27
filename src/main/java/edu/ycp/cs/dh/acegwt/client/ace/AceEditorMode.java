@@ -38,6 +38,8 @@ public enum AceEditorMode {
 	COLDFUSION("coldfusion"),
 	/** C#. */
 	CSHARP("csharp"),
+    /** CSP. */
+    CSP("csp"),
 	/** CSS. */
 	CSS("css"),
 	/** Diff. */
