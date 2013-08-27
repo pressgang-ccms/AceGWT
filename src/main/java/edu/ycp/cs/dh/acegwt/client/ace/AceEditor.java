@@ -143,6 +143,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private String themeName;
     /**
+     * This value is used as a buffer to hold the font size state before the editor is created
+     */
+    private String fontSize;
+    /**
      * The spell checking web worker
      */
     private JavaScriptObject spellCheckingWorker;
@@ -242,7 +246,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private native void startEditorNative(final String text, final String themeName, final String shortModeName,
             final boolean readOnly, final boolean useSoftTabs, final int tabSize, final boolean hScrollBarAlwaysVisible,
             final boolean showGutter, final boolean highlightSelectedWord, final boolean showPrintMargin,
-            final boolean userWrap, final boolean showInvisibles) /*-{
+            final boolean userWrap, final boolean showInvisibles, final String fontSize) /*-{
 
 		console.log("ENTER AceEditor.startEditorNative()");
 
@@ -319,6 +323,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             editor.getSession().setUseWrapMode(true);
         }
 
+        if (fontSize != null) {
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setFontSizeNative(Ljava/lang/String;)(fontSize);
+        }
+
 		// Show invisibles
 		console.log("\t\tSetting Show Invisible Characters");
 		editor.setShowInvisibles(showInvisibles);
@@ -376,7 +384,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         super.onLoad();
         startEditorNative(text, themeName, mode != null ? mode.getName() : null,
                 readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord,
-                showPrintMargin, useWrap, showInvisibles);
+                showPrintMargin, useWrap, showInvisibles, fontSize);
         logger.log(Level.INFO, "EXIT AceEditor.onLoad()");
     }
 
@@ -563,10 +571,22 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     /**
      * Set font size.
      */
-    public native void setFontSize(final String fontSize) /*-{
-		var elementId = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId;
-		var elt = $doc.getElementById(elementId);
-		elt.style.fontSize = fontSize;
+    public void setFontSize(final String fontSize) {
+        this.fontSize = fontSize;
+        setFontSizeNative(fontSize);
+    };
+
+    /**
+     * Set font size.
+     */
+    public native void setFontSizeNative(final String fontSize) /*-{
+        var elementId = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId;
+        if (elementId != null) {
+            var elt = $doc.getElementById(elementId);
+            if (elt != null) {
+                elt.style.fontSize = fontSize;
+            }
+        }
     }-*/;
 
     /**
