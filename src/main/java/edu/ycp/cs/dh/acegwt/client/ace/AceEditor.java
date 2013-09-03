@@ -1058,13 +1058,14 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                         option["<iframe class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
 
                                         // Add an option to open the topic in a new window
-                                        var editTopicOption = {};
-                                        var editTopicDetails = function(menuItem,menu){
-                                            $wnd.open("/pressgang-ccms-ui/#SearchResultsAndTopicView;query;topicIds=" + topicData.id, "", "")
-                                        };
-										editTopicOption["Edit this topic"] = editTopicDetails;
+										var editOption = {};
+										var editOptionDetails = {};
+										editOptionDetails["onclick"] = function(menuItem,menu){
+											$wnd.open("#SearchResultsAndTopicView;query;topicIds=" + topicId);
+										};
+										editOption["Edit this topic"] = editOptionDetails;
 
-                                        callback([option, editTopicOption]);
+										callback([option, editOption]);
                                     }
                                 });
                             }
