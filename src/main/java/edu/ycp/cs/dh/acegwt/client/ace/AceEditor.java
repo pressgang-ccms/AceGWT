@@ -1056,7 +1056,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 										optionDetails["className"] = "ContextMenuIFrameParent";
                                         optionDetails["disabled"] = true;
                                         option["<iframe class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
-                                        callback([option]);
+
+                                        // Add an option to open the topic in a new window
+                                        var editTopicOption = {};
+                                        var editTopicDetails = function(menuItem,menu){
+                                            $wnd.open("/pressgang-ccms-ui/#SearchResultsAndTopicView;query;topicIds=" + topicData.id, "", "")
+                                        };
+										editTopicOption["Edit this topic"] = editTopicDetails;
+
+                                        callback([option, editTopicOption]);
                                     }
                                 });
                             }
@@ -1346,7 +1354,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 tagMatchingWorker.postMessage({lines: editor.getSession().getDocument().getAllLines()});
             };
 
-            // Enable spell checking on regular intervals
+            // Enable tag matching on regular intervals
             if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval != null) {
                 clearInterval(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = null;
