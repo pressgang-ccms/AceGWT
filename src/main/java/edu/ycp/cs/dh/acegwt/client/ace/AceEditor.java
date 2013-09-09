@@ -1012,9 +1012,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     console.log("Could not find csNodes that relate to the topic");
                                 },
 								success: function(csNodeData) {
+
+									csNodeData.items.sort(function(a,b){
+                                        return a.item.contentSpec.id - b.item.contentSpec.id;
+                                    });
+
                                     var foundSpecs = {};
                                     for (var i = 0, count = csNodeData.items.length; i < count; ++i) {
-                                        var specId = csNodeData.items[i].item.contentSpec.id;
+                                        var csNode = csNodeData.items[i].item;
+                                        var specId = csNode.contentSpec.id;
 
                                         if (!foundSpecs[specId]) {
 											foundSpecs[specId] = 1;
@@ -1030,7 +1036,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 													$wnd.open("#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
 												};
 											}(specId);
-                                            editSpecOption["Edit spec " + specId] = editSpecOptionDetails;
+
+                                            var title = "Edit spec " + specId;
+											if (csNode.entityRevision) {
+												title += " (Topic fixed at revision " + csNode.entityRevision + ")";
+                                            }
+
+                                            editSpecOption[title] = editSpecOptionDetails;
 
                                             callBackOptions.push(editSpecOption);
                                         }
