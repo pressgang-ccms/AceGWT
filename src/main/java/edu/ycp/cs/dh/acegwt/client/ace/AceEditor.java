@@ -1002,8 +1002,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                             // Now find all the specs that this topic belongs to
 
-                            var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + wordData.value +
-                                "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%7D%5D%7D%5D%7D";
+                            //var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + wordData.value +
+                            //    "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%7D%5D%7D%5D%7D";
+
+							var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + wordData.value +
+								"?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22children_OTM%22%7D%7D%5D%7D%5D%7D%5D%7D";
 
 							$wnd.jQuery.ajax({
 								dataType: "json",
@@ -1038,7 +1041,18 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 											}(specId);
 
                                             var title = "Edit spec " + specId;
-											if (csNode.entityRevision) {
+
+                                            if (csNode.contentSpec && csNode.contentSpec.children_OTM) {
+                                                for (var childIndex = 0, childCount = csNode.contentSpec.children_OTM.items.length; childIndex < childCount; ++childIndex) {
+                                                    var childNode = csNode.contentSpec.children_OTM.items[childIndex].item;
+                                                    if (childNode.title == "Title") {
+														title += " " + childNode.additionalText;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            if (csNode.entityRevision) {
 												title += " (Topic fixed at revision " + csNode.entityRevision + ")";
                                             }
 
