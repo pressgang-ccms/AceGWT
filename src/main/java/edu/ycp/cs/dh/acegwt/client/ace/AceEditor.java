@@ -1011,33 +1011,34 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 								error: function() {
                                     console.log("Could not find csNodes that relate to the topic");
                                 },
-								success: function(specId) {
-                                    return function(csNodeData) {
-										var foundSpecs = {};
-										for (var i = 0, count = csNodeData.items.length; i < count; ++i) {
-											var specId = csNodeData.items[i].item.contentSpec.id;
+								success: function(csNodeData) {
+                                    var foundSpecs = {};
+                                    for (var i = 0, count = csNodeData.items.length; i < count; ++i) {
+                                        var specId = csNodeData.items[i].item.contentSpec.id;
 
-											if (!foundSpecs[specId]) {
-												foundSpecs[specId] = 1;
-											} else {
-												foundSpecs[specId] += 1;
-											}
+                                        if (!foundSpecs[specId]) {
+											foundSpecs[specId] = 1;
+                                        } else {
+											foundSpecs[specId] += 1;
+                                        }
 
-											if (foundSpecs[specId] == 1) {
-												var editSpecOption = {};
-												var editSpecOptionDetails = {};
-												editSpecOptionDetails["onclick"] = function(menuItem,menu){
+                                        if (foundSpecs[specId] == 1) {
+                                            var editSpecOption = {};
+                                            var editSpecOptionDetails = {};
+                                            editSpecOptionDetails["onclick"] = function(specId) {
+                                                return function(menuItem,menu){
 													$wnd.open("#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
-												}
-												editSpecOption["Edit spec " + specId] = editSpecOptionDetails;
+												};
+											}(specId);
+                                            editSpecOption["Edit spec " + specId] = editSpecOptionDetails;
 
-												callBackOptions.push(editSpecOption);
-											}
-										}
+                                            callBackOptions.push(editSpecOption);
+                                        }
+                                    }
 
-										callback(callBackOptions);
-									};
-								}(specId)
+                                    callback(callBackOptions);
+                                }
+
 							});
 						}
 					}(this.wordData)
