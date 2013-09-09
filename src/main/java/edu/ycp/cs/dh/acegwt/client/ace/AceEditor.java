@@ -973,6 +973,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         $wnd.jQuery('#' + this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function(cmenu,t,callback) {
 
 			if (this.wordData.type == 'numeric') {
+
+                // find out if the number that was clicked on is a topic
+
                 var getTopicRestUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/topic/get/json/" + this.wordData.value;
 
 				$wnd.jQuery.ajax({
@@ -993,10 +996,48 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 							editOptionDetails["onclick"] = function(menuItem,menu){
 								$wnd.open("#SearchResultsAndTopicView;query;topicIds=" + wordData.value);
 							}
+							editOption["Edit topic " + wordData.value] = editOptionDetails;
 
-							editOption["Edit this topic"] = editOptionDetails;
+                            var callBackOptions = [editOption];
 
-							callback([editOption]);
+                            // Now find all the specs that this topic belongs to
+
+                            var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + wordData.value +
+                                "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%7D%5D%7D%5D%7D";
+
+							$wnd.jQuery.ajax({
+								dataType: "json",
+								url: contentSpecRESTUrl,
+								error: function() {
+                                    console.log("Could not find csNodes that relate to the topic");
+                                },
+								success: function(csNodeData) {
+                                    var foundSpecs = {};
+                                    for (var i = 0, count = csNodeData.items.length; i < count; ++i) {
+                                        var specId = csNodeData.items[i].item.contentSpec.id;
+
+                                        if (!foundSpecs[specId]) {
+											foundSpecs[specId] = 1;
+                                        } else {
+											foundSpecs[specId] += 1;
+                                        }
+
+                                        if (foundSpecs[specId] == 1) {
+                                            var editSpecOption = {};
+                                            var editSpecOptionDetails = {};
+                                            editSpecOptionDetails["onclick"] = function(menuItem,menu){
+                                                $wnd.open("#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
+                                            }
+                                            editSpecOption["Edit spec " + specId] = editSpecOptionDetails;
+
+                                            callBackOptions.push(editSpecOption);
+                                        }
+                                    }
+
+                                    callback(callBackOptions);
+                                }
+
+							});
 						}
 					}(this.wordData)
 				});
