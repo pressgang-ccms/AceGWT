@@ -427,8 +427,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
 
-
-
             // clean up pending operations
             if (spellcheckInterval != null) {
                 clearInterval(spellcheckInterval);
@@ -974,104 +972,133 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
         $wnd.jQuery('#' + this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function(cmenu,t,callback) {
 
-            var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
+			if (this.wordData.type == 'numeric') {
+                var getTopicRestUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/topic/get/json/" + this.wordData.value;
 
-            if (this.wordData.type == 'spelling') {
-                if (positiveDictionary != null) {
+				$wnd.jQuery.ajax({
+					dataType: "json",
+					url: getTopicRestUrl,
+					error: function(wordData) {
+						return function() {
+							console.log("Could not find topic with ID " + wordData.value);
+						}
+					}(this.wordData),
+					success: function(wordData) {
+						return function(topicData) {
+							console.log("Found topic with ID " + wordData.value);
 
-                    var retValue = [];
+							// Add an option to open the topic in a new window
+							var editOption = {};
+							var editOptionDetails = {};
+							editOptionDetails["onclick"] = function(menuItem,menu){
+								$wnd.open("#SearchResultsAndTopicView;query;topicIds=" + wordData.value);
+							}
 
-                    // Populate the context menu for the spelling options
+							editOption["Edit this topic"] = editOptionDetails;
 
-                    processingSuggestions = true;
+							callback([editOption]);
+						}
+					}(this.wordData)
+				});
+			} else {
 
-                    positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().suggest(word, 5, function(wordData) {
-                        return function(suggestions) {
-                            processingSuggestions = false;
+                var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
 
-                            if (suggestions.length == 0) {
-                                var option = {};
-                                option["No Suggestions"]=function(menuItem,menu){};
-                                retValue.push(option);
-                            } else {
-                                for (var i = 0, _len = suggestions.length; i < _len; i++) {
+                if (this.wordData.type == 'spelling') {
+                    if (positiveDictionary != null) {
+
+                        var retValue = [];
+
+                        // Populate the context menu for the spelling options
+
+                        processingSuggestions = true;
+
+                        positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().suggest(word, 5, function(wordData) {
+                            return function(suggestions) {
+                                processingSuggestions = false;
+
+                                if (suggestions.length == 0) {
                                     var option = {};
-                                    var suggestion = suggestions[i];
-                                    option[suggestion] = function(suggestion, wordData){
-                                        return function(menuItem,menu){
-                                            var currentScroll = editor.getSession().getScrollTop();
-                                            editor.getSession().setValue(
-                                                replaceWord(
-                                                    editor.getSession().getValue(),
-                                                    wordData.line,
-                                                    wordData.start,
-                                                    wordData.end,
-                                                    suggestion));
-                                            editor.getSession().setScrollTop(currentScroll);
-                                        };
-                                    }(suggestion, wordData);
-
+                                    option["No Suggestions"]=function(menuItem,menu){};
                                     retValue.push(option);
-                                }
-                            }
-
-                            callback(retValue);
-
-                        };
-                    }(this.wordData));
-                }
-            } else if (this.wordData.type == 'tag') {
-                if (tagDB != null) {
-                    var database = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getDatabase()();
-                    var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
-                    if (topicId != null) {
-						processingSuggestions = true;
-                        var restServerCallback = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getGetRESTServerCallback()();
-                        var restServer = restServerCallback.@edu.ycp.cs.dh.acegwt.client.tagdb.GetRESTServerCallback::getBaseRESTURL()();
-
-                        // get the topic XML
-                        var getTopicRestUrl = restServer + "/1/topic/get/json/" + topicId;
-                        $wnd.jQuery.ajax({
-                            dataType: "json",
-                            url: getTopicRestUrl,
-                            error: function() {processingSuggestions = false;},
-                            success: function(topicData) {
-                                // hold the XML
-                                var holdXMLRestUrl = restServer + "/1/holdxml";
-                                $wnd.jQuery.ajax({
-                                    type: "POST",
-                                    url: holdXMLRestUrl,
-                                    data: "<?xml-stylesheet type='text/xsl' href='/pressgang-ccms-static/publican-docbook/html-single-renderonly.xsl'?>" + topicData.xml,
-                                    contentType: 'application/xml',
-                                    dataType: 'json',
-									error: function() {processingSuggestions = false;},
-                                    success: function(holdxmlData) {
-										processingSuggestions = false;
-
-                                        // echo the XML into an iframe
-                                        var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdxmlData.value;
+                                } else {
+                                    for (var i = 0, _len = suggestions.length; i < _len; i++) {
                                         var option = {};
-                                        var optionDetails = {};
-                                        optionDetails["onclick"] = function(menuItem,menu){};
-										optionDetails["className"] = "ContextMenuIFrameParent";
-                                        optionDetails["disabled"] = true;
-                                        option["<iframe class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
+                                        var suggestion = suggestions[i];
+                                        option[suggestion] = function(suggestion, wordData){
+                                            return function(menuItem,menu){
+                                                var currentScroll = editor.getSession().getScrollTop();
+                                                editor.getSession().setValue(
+                                                    replaceWord(
+                                                        editor.getSession().getValue(),
+                                                        wordData.line,
+                                                        wordData.start,
+                                                        wordData.end,
+                                                        suggestion));
+                                                editor.getSession().setScrollTop(currentScroll);
+                                            };
+                                        }(suggestion, wordData);
 
-                                        // Add an option to open the topic in a new window
-										var editOption = {};
-										var editOptionDetails = {};
-										editOptionDetails["onclick"] = function(menuItem,menu){
-											$wnd.open("#SearchResultsAndTopicView;query;topicIds=" + topicId);
-										};
-										editOption["Edit this topic"] = editOptionDetails;
-
-										callback([option, editOption]);
+                                        retValue.push(option);
                                     }
-                                });
-                            }
-                        });
+                                }
 
+                                callback(retValue);
 
+                            };
+                        }(this.wordData));
+                    }
+                } else if (this.wordData.type == 'tag') {
+                    if (tagDB != null) {
+                        var database = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getDatabase()();
+                        var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
+                        if (topicId != null) {
+                            processingSuggestions = true;
+                            var restServerCallback = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getGetRESTServerCallback()();
+                            var restServer = restServerCallback.@edu.ycp.cs.dh.acegwt.client.tagdb.GetRESTServerCallback::getBaseRESTURL()();
+
+                            // get the topic XML
+                            var getTopicRestUrl = restServer + "/1/topic/get/json/" + topicId;
+                            $wnd.jQuery.ajax({
+                                dataType: "json",
+                                url: getTopicRestUrl,
+                                error: function() {processingSuggestions = false;},
+                                success: function(topicData) {
+                                    // hold the XML
+                                    var holdXMLRestUrl = restServer + "/1/holdxml";
+                                    $wnd.jQuery.ajax({
+                                        type: "POST",
+                                        url: holdXMLRestUrl,
+                                        data: "<?xml-stylesheet type='text/xsl' href='/pressgang-ccms-static/publican-docbook/html-single-renderonly.xsl'?>" + topicData.xml,
+                                        contentType: 'application/xml',
+                                        dataType: 'json',
+                                        error: function() {processingSuggestions = false;},
+                                        success: function(holdxmlData) {
+                                            processingSuggestions = false;
+
+                                            // echo the XML into an iframe
+                                            var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdxmlData.value;
+                                            var option = {};
+                                            var optionDetails = {};
+                                            optionDetails["onclick"] = function(menuItem,menu){};
+                                            optionDetails["className"] = "ContextMenuIFrameParent";
+                                            optionDetails["disabled"] = true;
+                                            option["<iframe class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
+
+                                            // Add an option to open the topic in a new window
+                                            var editOption = {};
+                                            var editOptionDetails = {};
+                                            editOptionDetails["onclick"] = function(menuItem,menu){
+                                                $wnd.open("#SearchResultsAndTopicView;query;topicIds=" + topicId);
+                                            };
+                                            editOption["Edit this topic"] = editOptionDetails;
+
+                                            callback([option, editOption]);
+                                        }
+                                    });
+                                }
+                            });
+                        }
                     }
                 }
             }
@@ -1081,7 +1108,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 this.wordData = {};
 
-                $wnd.jQuery("div[class^='misspelled'], div[class^='badword'], div[class^='tagmatch']").each(
+                // the divs with the classes misspeled, badword and tagmatch are all highlights added above words by the
+                // various workers created to scan the text and look for certain elements.
+                // the span with the class ace_numeric is part of the theme.
+
+                $wnd.jQuery("div[class^='misspelled'], div[class^='badword'], div[class^='tagmatch'], span[class*='ace_numeric']").each(
                     function(wordData){
                         return function(){
                             if ($wnd.jQuery(this).offset().left <= event.clientX &&
@@ -1102,6 +1133,14 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                         wordData['line'] = matches[2];
                                         wordData['start'] = matches[3];
                                         wordData['end'] = matches[4];
+                                    } else {
+                                        if (classAttribute.indexOf("ace_numeric") != -1) {
+											retValue = true;
+
+                                            wordData['type'] = 'numeric';
+                                            wordData['value'] = $wnd.jQuery(this).text();
+
+                                        }
                                     }
                                 }
 
