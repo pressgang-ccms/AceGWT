@@ -974,9 +974,31 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 			if (this.wordData.type == 'numeric') {
 
+				// Display an initial loading menu item
+                var option = {};
+				var optionDetails = {};
+				optionDetails["onclick"] = function(menuItem,menu){};
+				optionDetails["disabled"] = true;
+				option["Loading. This can take a few seconds..."] = optionDetails;
+
+				callback([option]);
+
+                // Start loading the data for the real menu items
+                var callBackOptions = [];
+                var specCallbackOption = []
+                var topicDetailsCallbackFinished = false;
+				var specDetailsCallbackFinished = false;
+
+                doCallback = function() {
+					if (topicDetailsCallbackFinished && specDetailsCallbackFinished) {
+						cmenu.hide();
+                        callback(callBackOptions.concat(specCallbackOption));
+                    }
+                }
+
                 // find out if the number that was clicked on is a topic
 
-                var getTopicRestUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/topic/get/json/" + this.wordData.value + "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22revisions%22%2C%20%22start%22%3A0%2C%20%22end%22%3A5%7D%2C%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22logDetails%22%7D%7D%5D%7D%5D%7D";
+                var getTopicRestUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/topic/get/json/" + this.wordData.value + "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22sourceUrls_OTM%22%7D%7D%2C%20%7B%22trunk%22%3A%7B%22name%22%3A%20%22revisions%22%2C%20%22start%22%3A0%2C%20%22end%22%3A5%7D%2C%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22logDetails%22%7D%7D%5D%7D%5D%7D";
 
 				$wnd.jQuery.ajax({
 					dataType: "json",
@@ -984,6 +1006,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 					error: function(wordData) {
 						return function() {
 							console.log("Could not find topic with ID " + wordData.value);
+							topicDetailsCallbackFinished = true;
+							doCallback();
 						}
 					}(this.wordData),
 					success: function(wordData) {
@@ -998,7 +1022,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 							}
 							editOption["Edit topic " + wordData.value] = editOptionDetails;
 
-                            var callBackOptions = [editOption, $wnd.jQuery.contextMenu.separator];
+                            callBackOptions.push(editOption);
+							callBackOptions.push($wnd.jQuery.contextMenu.separator);
 
                             // Add a list of the last 5 revisions
                             for (var revisionIndex = 0, revisionCount = topicData.revisions.items.length; revisionIndex < revisionCount; ++revisionIndex) {
@@ -1016,80 +1041,109 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 									// See TopicFilteredResultsAndDetailsPresenter.parseToken() for the format of this url
                                     $wnd.open("#SearchResultsAndTopicView;topicViewData;" + wordData.value + "=r:" + revision.revision + ";query;topicIds=" + wordData.value);
 								}
-								revisionOption[revision.revision + " " + $wnd.moment(revision.lastModified).format("D MMM YY HH:mm") + " " + message] = revisionOptionDetails;
+								revisionOption[revision.revision + " " + $wnd.moment(revision.lastModified).format("DD MMM YY HH:mm") + " " + message] = revisionOptionDetails;
 								callBackOptions.push(revisionOption);
                             }
+
+                            // Add a list of the source urls
+
+							callBackOptions.push($wnd.jQuery.contextMenu.separator);
+
+							for (var urlIndex = 0, urlCount = topicData.sourceUrls_OTM.items.length; urlIndex < urlCount; ++urlIndex) {
+								var url = topicData.sourceUrls_OTM.items[urlIndex].item;
+
+								// truncate long revision messages
+								var title = url.title ? url.title : url.url;
+								if (title.length > 100) {
+									title = title.substr(0, 97) + "...";
+								}
+
+								var urlOption = {};
+								var urlOptionDetails = {};
+								urlOptionDetails["onclick"] = function(menuItem,menu){
+									$wnd.open(url.url);
+								}
+								urlOption[title] = urlOptionDetails;
+								callBackOptions.push(urlOption);
+							}
 
                             // Now find all the specs that this topic belongs to
 
 							callBackOptions.push($wnd.jQuery.contextMenu.separator);
 
-                            //var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + wordData.value +
-                            //    "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%7D%5D%7D%5D%7D";
-
-							var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + wordData.value +
-								"?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22children_OTM%22%7D%7D%5D%7D%5D%7D%5D%7D";
-
-							$wnd.jQuery.ajax({
-								dataType: "json",
-								url: contentSpecRESTUrl,
-								error: function() {
-                                    console.log("Could not find csNodes that relate to the topic");
-                                },
-								success: function(csNodeData) {
-
-									csNodeData.items.sort(function(a,b){
-                                        return a.item.contentSpec.id - b.item.contentSpec.id;
-                                    });
-
-                                    var foundSpecs = {};
-                                    for (var i = 0, count = csNodeData.items.length; i < count; ++i) {
-                                        var csNode = csNodeData.items[i].item;
-                                        var specId = csNode.contentSpec.id;
-
-                                        if (!foundSpecs[specId]) {
-											foundSpecs[specId] = 1;
-                                        } else {
-											foundSpecs[specId] += 1;
-                                        }
-
-                                        if (foundSpecs[specId] == 1) {
-                                            var editSpecOption = {};
-                                            var editSpecOptionDetails = {};
-                                            editSpecOptionDetails["onclick"] = function(specId) {
-                                                return function(menuItem,menu){
-													$wnd.open("#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
-												};
-											}(specId);
-
-                                            var title = "Edit spec " + specId;
-
-                                            if (csNode.contentSpec && csNode.contentSpec.children_OTM) {
-                                                for (var childIndex = 0, childCount = csNode.contentSpec.children_OTM.items.length; childIndex < childCount; ++childIndex) {
-                                                    var childNode = csNode.contentSpec.children_OTM.items[childIndex].item;
-                                                    if (childNode.title == "Title") {
-														title += " " + childNode.additionalText;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-
-                                            if (csNode.entityRevision) {
-												title += " (Topic fixed at revision " + csNode.entityRevision + ")";
-                                            }
-
-                                            editSpecOption[title] = editSpecOptionDetails;
-
-                                            callBackOptions.push(editSpecOption);
-                                        }
-                                    }
-
-                                    callback(callBackOptions);
-                                }
-
-							});
+							topicDetailsCallbackFinished = true;
+							doCallback();
 						}
 					}(this.wordData)
+				});
+
+				//var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + wordData.value +
+				//    "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%7D%5D%7D%5D%7D";
+
+				var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + this.wordData.value +
+					"?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22children_OTM%22%7D%7D%5D%7D%5D%7D%5D%7D";
+
+				$wnd.jQuery.ajax({
+					dataType: "json",
+					url: contentSpecRESTUrl,
+					error: function() {
+						console.log("Could not find csNodes that relate to the topic");
+						specDetailsCallbackFinished = true;
+						doCallback();
+					},
+					success: function(csNodeData) {
+
+						console.log("Found CSNodes");
+
+						csNodeData.items.sort(function(a,b){
+							return a.item.contentSpec.id - b.item.contentSpec.id;
+						});
+
+						var foundSpecs = {};
+						for (var i = 0, count = csNodeData.items.length; i < count; ++i) {
+							var csNode = csNodeData.items[i].item;
+							var specId = csNode.contentSpec.id;
+
+							if (!foundSpecs[specId]) {
+								foundSpecs[specId] = 1;
+							} else {
+								foundSpecs[specId] += 1;
+							}
+
+							if (foundSpecs[specId] == 1) {
+								var editSpecOption = {};
+								var editSpecOptionDetails = {};
+								editSpecOptionDetails["onclick"] = function(specId) {
+									return function(menuItem,menu){
+										$wnd.open("#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
+									};
+								}(specId);
+
+								var title = "Edit spec " + specId;
+
+								if (csNode.contentSpec && csNode.contentSpec.children_OTM) {
+									for (var childIndex = 0, childCount = csNode.contentSpec.children_OTM.items.length; childIndex < childCount; ++childIndex) {
+										var childNode = csNode.contentSpec.children_OTM.items[childIndex].item;
+										if (childNode.title == "Title") {
+											title += " " + childNode.additionalText;
+											break;
+										}
+									}
+								}
+
+								if (csNode.entityRevision) {
+									title += " (Topic fixed at revision " + csNode.entityRevision + ")";
+								}
+
+								editSpecOption[title] = editSpecOptionDetails;
+
+								specCallbackOption.push(editSpecOption);
+							}
+						}
+
+						specDetailsCallbackFinished = true;
+						doCallback();
+					}
 				});
 			} else {
 
