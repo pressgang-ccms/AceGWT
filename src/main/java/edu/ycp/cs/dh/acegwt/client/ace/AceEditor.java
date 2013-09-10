@@ -976,7 +976,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 // find out if the number that was clicked on is a topic
 
-                var getTopicRestUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/topic/get/json/" + this.wordData.value;
+                var getTopicRestUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/topic/get/json/" + this.wordData.value + "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22revisions%22%2C%20%22start%22%3A0%2C%20%22end%22%3A5%7D%2C%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22logDetails%22%7D%7D%5D%7D%5D%7D";
 
 				$wnd.jQuery.ajax({
 					dataType: "json",
@@ -998,9 +998,31 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 							}
 							editOption["Edit topic " + wordData.value] = editOptionDetails;
 
-                            var callBackOptions = [editOption];
+                            var callBackOptions = [editOption, $wnd.jQuery.contextMenu.separator];
+
+                            // Add a list of the last 5 revisions
+                            for (var revisionIndex = 0, revisionCount = topicData.revisions.items.length; revisionIndex < revisionCount; ++revisionIndex) {
+                                var revision = topicData.revisions.items[revisionIndex].item;
+
+                                // truncate long revision messages
+                                var message = revision.logDetails.message;
+                                if (message.length > 100) {
+									message = message.substr(0, 97) + "...";
+                                }
+
+								var revisionOption = {};
+								var revisionOptionDetails = {};
+								revisionOptionDetails["onclick"] = function(menuItem,menu){
+									// See TopicFilteredResultsAndDetailsPresenter.parseToken() for the format of this url
+                                    $wnd.open("#SearchResultsAndTopicView;topicViewData;" + wordData.value + "=r:" + revision.revision + ";query;topicIds=" + wordData.value);
+								}
+								revisionOption[revision.revision + " " + $wnd.moment(revision.lastModified).format("D MMM YY HH:mm") + " " + message] = revisionOptionDetails;
+								callBackOptions.push(revisionOption);
+                            }
 
                             // Now find all the specs that this topic belongs to
+
+							callBackOptions.push($wnd.jQuery.contextMenu.separator);
 
                             //var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + wordData.value +
                             //    "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%7D%5D%7D%5D%7D";
