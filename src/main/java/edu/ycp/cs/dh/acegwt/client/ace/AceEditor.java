@@ -1005,7 +1005,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 var revision = topicData.revisions.items[revisionIndex].item;
 
                                 // truncate long revision messages
-                                var message = revision.logDetails.message;
+                                var message = revision.logDetails.message ? revision.logDetails.message : "";
                                 if (message.length > 100) {
 									message = message.substr(0, 97) + "...";
                                 }
