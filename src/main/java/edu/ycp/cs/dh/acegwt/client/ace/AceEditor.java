@@ -908,7 +908,30 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * @param style The style to clear and then add
      */
     public native void clearAndAddGutterDecoration(final int[] lineNumbers, final String style) /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+
+		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::clearGutterDecoration(Ljava/lang/String;)(style);
+		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::addGutterDecoration([ILjava/lang/String;)(lineNumbers, style);
+    }-*/;
+
+    public native void clearGutterDecoration(final String style) /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+		if (editor == null) {
+			console.log("editor == null. clearAndAddGutterDecoration() was not called successfully.");
+			return;
+		}
+
+        var session = editor.getSession();
+
+		var lines = session.getDocument().getAllLines();
+		for (var i = 0, linesLength = lines.length; i < linesLength; ++i) {
+			session.removeGutterDecoration(i, style);
+		}
+    }-*/;
+
+    public native void addGutterDecoration(final int[] lineNumbers, final String style) /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
 		if (editor == null) {
 			console.log("editor == null. clearAndAddGutterDecoration() was not called successfully.");
@@ -925,14 +948,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			return;
 		}
 
-		var session = editor.getSession();
-
-		var lines = session.getDocument().getAllLines();
-		for (var i = 0, linesLength = lines.length; i < linesLength; ++i) {
-			session.removeGutterDecoration(i, style);
-		}
-
-		for (var i = 0, lineNumbersLength = lineNumbers.length; i < lineNumbersLength; ++i) {
+        for (var i = 0, lineNumbersLength = lineNumbers.length; i < lineNumbersLength; ++i) {
 			session.addGutterDecoration(lineNumbers[i], style);
 		}
     }-*/;
@@ -1152,6 +1168,14 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 if (this.wordData.type == 'spelling') {
                     if (positiveDictionary != null) {
 
+						// Display an initial loading menu item
+						var option = {};
+						var optionDetails = {};
+						optionDetails["onclick"] = function(menuItem,menu){};
+						optionDetails["disabled"] = true;
+						option["Loading. This can take a few seconds..."] = optionDetails;
+						callback([option]);
+
                         var retValue = [];
 
                         // Populate the context menu for the spelling options
@@ -1188,6 +1212,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     }
                                 }
 
+                                cmenu.hide();
                                 callback(retValue);
 
                             };
