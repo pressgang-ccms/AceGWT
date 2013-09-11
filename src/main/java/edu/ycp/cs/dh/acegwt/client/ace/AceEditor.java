@@ -948,6 +948,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			return;
 		}
 
+		var session = editor.getSession();
+
         for (var i = 0, lineNumbersLength = lineNumbers.length; i < lineNumbersLength; ++i) {
 			session.addGutterDecoration(lineNumbers[i], style);
 		}
