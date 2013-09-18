@@ -1731,11 +1731,40 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * @param text the text to insert
      */
     public native void insertText(final String text)/*-{
-    var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
         if (editor != null) {
             editor.insert(text);
         } else {
             console.log("editor == null. insertText() was not called successfully.");
         }
+    }-*/;
+
+    /**
+     * Scrolls the editor to the specified row.
+     *
+     * @param row The row to scroll to.
+     */
+    public native void scrollToRow(final Integer row) /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        if (editor != null) {
+            editor.scrollToRow(row);
+        } else {
+            console.log("editor == null. scrollToRow() was not called successfully.");
+        }
+    }-*/;
+
+    /**
+     * Get the row number of the first visible row in the editor.
+     *
+     * @return The row number of the first visible row.
+     */
+    public native Integer getFirstVisibleRow() /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        if (editor != null) {
+            return editor.getFirstVisibleRow();
+        } else {
+            console.log("editor == null. getFirstVisibleRow() was not called successfully.");
+        }
+        return null;
     }-*/;
 }
