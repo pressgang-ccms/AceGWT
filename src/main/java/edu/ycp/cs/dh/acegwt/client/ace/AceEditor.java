@@ -1267,6 +1267,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     }
                 } else if (this.wordData.type == 'tag' || this.wordData.type == 'spec') {
                     if (tagDB != null) {
+
+						var option = {};
+						var optionDetails = {};
+						optionDetails["onclick"] = function(menuItem,menu){};
+						optionDetails["disabled"] = true;
+						option["Loading. This can take a few seconds..."] = optionDetails;
+
+						callback([option]);
+
                         var database = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getDatabase()();
                         var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
                         if (topicId != null) {
