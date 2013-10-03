@@ -1348,7 +1348,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                                         if (matches[1] == 'tagmatch') {
 											wordData['type'] = 'tag';
-                                        } else if (matches[1] == 'tagspec') {
+                                        } else if (matches[1] == 'specmatch') {
 											wordData['type'] = 'spec';
 										} else  {
 											wordData['type'] = 'spelling';
