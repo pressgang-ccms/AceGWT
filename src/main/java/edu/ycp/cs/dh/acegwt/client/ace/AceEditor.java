@@ -465,6 +465,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var matchTagsInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval;
             var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
+            var specMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker;
 
             // clean up pending operations
             if (spellcheckInterval != null) {
@@ -487,6 +488,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 tagMatchingWorker.terminate();
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker = null;
             }
+
+			if (specMatchingWorker != null) {
+				tagMatchingWorker.specMatchingWorker();
+				this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker = null;
+			}
 
             if (editor != null) {
 
@@ -1566,13 +1572,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 					var Range = $wnd.ace.require('ace/range').Range;
 
 					for (var lineDataIndex = 0, lineDataLength = lineData.length; lineDataIndex < lineDataLength; ++lineDataIndex) {
-						var tagMatches = lineData[lineDataIndex];
+						var specMatches = lineData[lineDataIndex];
 
-						for (var j in tagMatches) {
-							var range = new Range(lineDataIndex, tagMatches[j][0], lineDataIndex, tagMatches[j][1]);
+						for (var j in specMatches) {
+							var range = new Range(lineDataIndex, specMatches[j][0], lineDataIndex, specMatches[j][1]);
 							specMetadataMarkersPresent[specMetadataMarkersPresent.length] = session.addMarker(
 								range,
-								"specmatch-" + lineDataIndex + "-" + tagMatches[j][0] + "-" + tagMatches[j][1],
+								"specmatch-" + lineDataIndex + "-" + specMatches[j][0] + "-" + specMatches[j][1],
 								"specmatch",
 								true);
 						}
