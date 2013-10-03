@@ -1309,7 +1309,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                             optionDetails["onclick"] = function(menuItem,menu){};
                                             optionDetails["className"] = "ContextMenuIFrameParent";
                                             optionDetails["disabled"] = true;
-                                            option["<iframe class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
+                                            // Firefox will not add scrollbars to the iframe after rendering an XML document. So we
+                                            // need to force the scrollbars by explictly setting the overflow style on the parent
+                                            // div, which will trigger the scrollbars to be made visible.
+                                            option["<iframe onload=\"javascript:document.getElementsByClassName('ContextMenuIFrame')[0].parentNode.style.overflow='auto'\" class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
 
                                             // Add an option to open the topic in a new window
                                             var editOption = {};
