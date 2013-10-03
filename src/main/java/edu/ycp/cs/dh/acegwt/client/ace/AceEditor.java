@@ -216,11 +216,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                      final TypoJS positiveDictionary,
                      final TypoJS negativeDictionary,
                      final TypoJS negativePhraseDictionary,
-                     final TagDB tagDB) {
+                     final TagDB tagDB,
+                     final boolean enableTagMatching,
+                     final boolean enableSpecMatching) {
         this.positiveDictionary = positiveDictionary;
         this.negativeDictionary = negativeDictionary;
         this.negativePhraseDictionary = negativePhraseDictionary;
         this.tagDB = tagDB;
+        this.enableTagMatching = enableTagMatching;
+        this.enableSpecMatching = enableSpecMatching;
 
         elementId = "_aceGWT" + nextId;
         nextId++;
@@ -260,10 +264,23 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * 
      * @param text The initial text to be placed into the editor
      */
-    private native void startEditorNative(final String text, final String themeName, final String shortModeName,
-            final boolean readOnly, final boolean useSoftTabs, final int tabSize, final boolean hScrollBarAlwaysVisible,
-            final boolean showGutter, final boolean highlightSelectedWord, final boolean showPrintMargin,
-            final boolean userWrap, final boolean showInvisibles, final String fontSize, final String fontFamily) /*-{
+    private native void startEditorNative(
+            final String text,
+            final String themeName,
+            final String shortModeName,
+            final boolean readOnly,
+            final boolean useSoftTabs,
+            final int tabSize,
+            final boolean hScrollBarAlwaysVisible,
+            final boolean showGutter,
+            final boolean highlightSelectedWord,
+            final boolean showPrintMargin,
+            final boolean userWrap,
+            final boolean showInvisibles,
+            final String fontSize,
+            final String fontFamily,
+            final boolean enableTagMatching,
+            final boolean enableSpecMatching) /*-{
 
 		console.log("ENTER AceEditor.startEditorNative()");
 
@@ -362,7 +379,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         console.log("\t\tEnabling Spell Checking");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setupContextMenu()();
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
-        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableTagMatching()();
+
+        if (enableTagMatching) {
+			console.log("\t\tEnabling Tag Matching");
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableTagMatching()();
+        }
+
+		if (enableSpecMatching) {
+			console.log("\t\tEnabling Spec Matching");
+			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpecMatching()();
+		}
 
         console.log("\t\tEnabling Snippets");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSnippets()();
@@ -405,7 +431,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         super.onLoad();
         startEditorNative(text, themeName, mode != null ? mode.getName() : null,
                 readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord,
-                showPrintMargin, useWrap, showInvisibles, fontSize, fontFamily);
+                showPrintMargin, useWrap, showInvisibles, fontSize, fontFamily, enableTagMatching, enableSpecMatching);
         logger.log(Level.INFO, "EXIT AceEditor.onLoad()");
     }
 
@@ -1493,6 +1519,102 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         }
 
     }-*/;
+
+    private native void enableSpecMatching() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		var tagDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagDB;
+
+		if (tagDB != null) {
+			var currentlyMatchingSpecMetadata = false;
+			var specMetadataMarkersPresent = [];
+			var specMetadataContentsModified = true;
+			var loaded = false;
+
+			// Check for changes to the text
+			editor.getSession().on('change', function(e) {
+				specMetadataContentsModified = true;
+			});
+
+			// Build the web worker to match tags
+
+			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker = new Worker("javascript/tagdb/contentSpecTagDB.js.js");
+			var specMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker;
+
+			specMatchingWorker.addEventListener('message', function(e){
+				try {
+					if (editor == null) {
+						return;
+					}
+
+					var lineData = e.data;
+
+					var session = editor.getSession();
+
+					// Clear the markers.
+					for (var i in specMetadataMarkersPresent) {
+						session.removeMarker(specMetadataMarkersPresent[i]);
+					}
+					specMetadataMarkersPresent = [];
+
+					var Range = $wnd.ace.require('ace/range').Range;
+
+					for (var lineDataIndex = 0, lineDataLength = lineData.length; lineDataIndex < lineDataLength; ++lineDataIndex) {
+						var tagMatches = lineData[lineDataIndex];
+
+						for (var j in tagMatches) {
+							var range = new Range(lineDataIndex, tagMatches[j][0], lineDataIndex, tagMatches[j][1]);
+							specMetadataMarkersPresent[specMetadataMarkersPresent.length] = session.addMarker(
+								range,
+								"specmatch-" + lineDataIndex + "-" + tagMatches[j][0] + "-" + tagMatches[j][1],
+								"specmatch",
+								true);
+						}
+
+					}
+				} finally {
+					currentlyMatchingSpecMetadata = false;
+				}
+			});
+
+
+			var matchSpecMetadata = function() {
+				if (!tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::isLoaded()()) {
+					console.log("Waiting for tag database to load.");
+					return;
+				}
+
+				if (currentlyMatchingSpecMetadata) {
+					return;
+				}
+
+				if (!specMetadataContentsModified) {
+					return;
+				}
+
+				if (!loaded) {
+					// Set the tag db
+					specMatchingWorker.postMessage({tagDB: tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getJSONDatabase()()});
+					loaded = true;
+				}
+
+				console.log("Matching Spec Metadata");
+
+				currentlyMatchingSpecMetadata = true;
+				specMetadataContentsModified = false;
+
+				specMatchingWorker.postMessage({lines: editor.getSession().getDocument().getAllLines()});
+			};
+
+			// Enable tag matching on regular intervals
+			if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval != null) {
+				clearInterval(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval);
+				this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = null;
+			}
+
+			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = setInterval(matchSpecMetadata, 500);
+			matchSpecMetadata();
+		}
+	}-*/;
 
     private native void enableTagMatching() /*-{
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
