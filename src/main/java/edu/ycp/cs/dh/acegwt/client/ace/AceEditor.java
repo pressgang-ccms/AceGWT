@@ -490,7 +490,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             }
 
 			if (specMatchingWorker != null) {
-				tagMatchingWorker.specMatchingWorker();
+				specMatchingWorker.terminate();
 				this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker = null;
 			}
 
