@@ -1323,7 +1323,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 // various workers created to scan the text and look for certain elements.
                 // the span with the class ace_numeric is part of the theme.
 
-                $wnd.jQuery("div[class^='misspelled'], div[class^='badword'], div[class^='tagmatch'], span[class*='ace_numeric']").each(
+                $wnd.jQuery("div[class^='misspelled'], div[class^='badword'], div[class^='tagmatch'], div[class^='specmatch'], span[class*='ace_numeric']").each(
                     function(wordData){
                         return function(){
                             if ($wnd.jQuery(this).offset().left <= event.clientX &&
