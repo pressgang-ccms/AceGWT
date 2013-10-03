@@ -1259,7 +1259,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                             };
                         }(this.wordData));
                     }
-                } else if (this.wordData.type == 'tag') {
+                } else if (this.wordData.type == 'tag' || this.wordData.type == 'spec') {
                     if (tagDB != null) {
                         var database = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getDatabase()();
                         var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
@@ -1335,12 +1335,19 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                                 if (classAttribute != null) {
 
-                                    var matches = /(misspelled|badword|tagmatch)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
+                                    var matches = /(misspelled|badword|tagmatch|specmatch)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
                                     if (matches != null && matches.length >= 5) {
 
                                         retValue = true;
 
-                                        wordData['type'] = matches[1] == 'tagmatch' ? 'tag' : 'spelling';
+                                        if (matches[1] == 'tagmatch') {
+											wordData['type'] = 'tag';
+                                        } else if (matches[1] == 'tagspec') {
+											wordData['type'] = 'spec';
+										} else  {
+											wordData['type'] = 'spelling';
+										}
+
                                         wordData['line'] = matches[2];
                                         wordData['start'] = matches[3];
                                         wordData['end'] = matches[4];
