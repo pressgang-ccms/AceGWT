@@ -1319,6 +1319,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                             };
                                             editOption["Edit this topic"] = editOptionDetails;
 
+											cmenu.hide();
                                             callback([option, editOption]);
                                         }
                                     });
