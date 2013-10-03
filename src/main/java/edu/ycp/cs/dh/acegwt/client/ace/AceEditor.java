@@ -1537,7 +1537,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 			// Build the web worker to match tags
 
-			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker = new Worker("javascript/tagdb/contentSpecTagDB.js.js");
+			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker = new Worker("javascript/tagdb/contentSpecTagDB.js");
 			var specMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker;
 
 			specMatchingWorker.addEventListener('message', function(e){
