@@ -139,6 +139,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private boolean showInvisibles = false;
     /**
+     * This value is used as a buffer to hold the "enable behaviours" state before the editor is created
+     */
+    private boolean enableBehaviours = true;
+    /**
      * This value is used as a buffer to hold the theme state before the editor is created
      */
     private String themeName;
@@ -261,28 +265,29 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     /**
      * Call this method to start the editor. Make sure that the widget has been attached to the DOM tree before calling this
      * method.
-     * 
-     * @param text The initial text to be placed into the editor
      */
-    private native void startEditorNative(
-            final String text,
-            final String themeName,
-            final String shortModeName,
-            final boolean readOnly,
-            final boolean useSoftTabs,
-            final int tabSize,
-            final boolean hScrollBarAlwaysVisible,
-            final boolean showGutter,
-            final boolean highlightSelectedWord,
-            final boolean showPrintMargin,
-            final boolean userWrap,
-            final boolean showInvisibles,
-            final String fontSize,
-            final String fontFamily,
-            final boolean enableTagMatching,
-            final boolean enableSpecMatching) /*-{
+    private native void startEditorNative() /*-{
 
 		console.log("ENTER AceEditor.startEditorNative()");
+
+        var text = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::text;
+        var themeName = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::themeName;
+        var mode = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::mode;
+        var shortModeName = mode ? mode.@edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode::getName()() : null;
+        var readOnly = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::readOnly;
+        var useSoftTabs = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::useSoftTabs;
+        var tabSize = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tabSize;
+        var hScrollBarAlwaysVisible = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::hScrollBarAlwaysVisible;
+        var highlightSelectedWord = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::highlightSelectedWord;
+        var showPrintMargin = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::showPrintMargin;
+        var userWrap = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::useWrap;
+        var showInvisibles = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::showInvisibles;
+        var fontSize = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::fontSize;
+        var fontFamily = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::fontFamily;
+        var enableTagMatching = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableTagMatching;
+        var enableSpecMatching = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpecMatching;
+        var enableBehaviours = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableBehaviours;
+        var showGutter = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::showGutter;
 
 		if ($wnd.ace == undefined) {
 			$wnd.alert("window.ace is undefined! Please make sure you have included the appropriate JavaScript files.");
@@ -293,14 +298,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		var editor = $wnd.ace.edit(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId);
 		editor.getSession().setUseWorker(false);
 		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = editor;
-
-		// I have been noticing sporadic failures of the editor
-		// to display properly and receive key/mouse events.
-		// Try to force the editor to resize and display itself fully.  See:
-		//    https://groups.google.com/group/ace-discuss/browse_thread/thread/237262b521dcea33
-		console.log("\tForce resize and redisplay");
-		editor.resize();
-		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::redisplay();
 
 		console.log("\tSetting Options");
 		// Set code folding (choose from manual, markbegin, markbeginend)
@@ -350,17 +347,24 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 		// Set wrapping. 
 		console.log("\t\tSetting User Wrap");
-        
         editor.getSession().setUseWrapMode(false);
-        
+
         if (userWrap) {
             editor.getSession().setUseWrapMode(true);
         }
 
+        // Set wrapping.
+        console.log("\t\tSetting Behaviours");
+        editor.setBehavioursEnabled(enableBehaviours);
+
+        // Set font size
+        console.log("\t\tSetting Font Size");
         if (fontSize != null) {
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setFontSizeNative(Ljava/lang/String;)(fontSize);
         }
 
+        // Set font family.
+        console.log("\t\tSetting Font Family");
         if (fontFamily != null) {
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setFontFamilyNative(Ljava/lang/String;)(fontFamily);
         }
@@ -375,6 +379,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             console.log("\t\tSetting Text");
             editor.getSession().setValue(text);
         }
+
+        // use workers by default
+        //console.log("\t\tEnabling Web Worker");
+        //editor.getSession().setUseWorker(true);
 
         console.log("\t\tEnabling Spell Checking");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setupContextMenu()();
@@ -392,6 +400,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
         console.log("\t\tEnabling Snippets");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSnippets()();
+
+        // I have been noticing sporadic failures of the editor
+        // to display properly and receive key/mouse events.
+        // Try to force the editor to resize and display itself fully.  See:
+        //    https://groups.google.com/group/ace-discuss/browse_thread/thread/237262b521dcea33
+        $wnd.setTimeout(function() {
+            console.log("\tForce resize and redisplay");
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::redisplay();
+        }, 0);
 
 		console.log("EXIT AceEditor.startEditorNative()");
 
@@ -429,9 +446,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     {
         logger.log(Level.INFO, "ENTER AceEditor.onLoad()");
         super.onLoad();
-        startEditorNative(text, themeName, mode != null ? mode.getName() : null,
-                readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord,
-                showPrintMargin, useWrap, showInvisibles, fontSize, fontFamily, enableTagMatching, enableSpecMatching);
+        startEditorNative();
         logger.log(Level.INFO, "EXIT AceEditor.onLoad()");
     }
 
@@ -501,8 +516,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 editor.destroy();
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = null;
-                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary = null;
-
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::resetAnnotations()();
 
             } else {
                 console.log("editor == null. destory() was not called successfully.");
@@ -894,6 +908,25 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     public void setUseWrapMode(final boolean userWrap) {
         this.useWrap = userWrap;
         setUseWrapModeNative(userWrap);
+    }
+
+    public boolean getBehavioursEnabled() {
+        return this.enableBehaviours;
+    }
+
+    private native void setBehavioursEnabledNative(final boolean enableBehaviours) /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+        if (editor != null) {
+            editor.setBehavioursEnabled(enableBehaviours);
+        } else {
+            console.log("editor == null. setBehavioursEnabled() was not called successfully.");
+        }
+    }-*/;
+
+    public void setBehavioursEnabled(final boolean enableBehaviours) {
+        this.enableBehaviours = enableBehaviours;
+        setBehavioursEnabledNative(enableBehaviours);
     }
 
     public boolean getUserWrapMode() {
