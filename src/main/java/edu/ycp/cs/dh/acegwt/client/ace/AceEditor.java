@@ -380,10 +380,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             editor.getSession().setValue(text);
         }
 
-        // use workers by default
-        //console.log("\t\tEnabling Web Worker");
-        //editor.getSession().setUseWorker(true);
-
         console.log("\t\tEnabling Spell Checking");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setupContextMenu()();
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
@@ -405,10 +401,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         // to display properly and receive key/mouse events.
         // Try to force the editor to resize and display itself fully.  See:
         //    https://groups.google.com/group/ace-discuss/browse_thread/thread/237262b521dcea33
-        $wnd.setTimeout(function() {
-            console.log("\tForce resize and redisplay");
-            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::redisplay();
-        }, 0);
+        console.log("\tForce resize and redisplay");
+        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::redisplay()();
 
 		console.log("EXIT AceEditor.startEditorNative()");
 
@@ -484,13 +478,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             // clean up pending operations
             if (spellcheckInterval != null) {
-                clearInterval(spellcheckInterval);
+                $wnd.clearInterval(spellcheckInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = null;
             }
 
             // clean up pending operations
             if (matchTagsInterval != null) {
-                clearInterval(matchTagsInterval);
+                $wnd.clearInterval(matchTagsInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = null;
             }
 
@@ -514,10 +508,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 //editor.getSession().removeAllListeners('change');
                 //editor.getSession().removeAllListeners('changeCursor');
 
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::clearAnnotations()();
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::clearMarkers()();
+
                 editor.destroy();
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = null;
-                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::resetAnnotations()();
-
             } else {
                 console.log("editor == null. destory() was not called successfully.");
             }
@@ -1566,11 +1561,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             // Enable spell checking on regular intervals
             if (spellcheckInterval != null) {
-                clearInterval(spellcheckInterval);
+                $wnd.clearInterval(spellcheckInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = null;
             }
 
-            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = setInterval(spellCheck, 500);
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = $wnd.setInterval(spellCheck, 500);
             spellCheck();
 
         } finally {
@@ -1666,11 +1661,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 			// Enable tag matching on regular intervals
 			if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval != null) {
-				clearInterval(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval);
+				$wnd.clearInterval(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval);
 				this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = null;
 			}
 
-			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = setInterval(matchSpecMetadata, 500);
+			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = $wnd.setInterval(matchSpecMetadata, 500);
 			matchSpecMetadata();
 		}
 	}-*/;
@@ -1762,11 +1757,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             // Enable tag matching on regular intervals
             if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval != null) {
-                clearInterval(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval);
+                $wnd.clearInterval(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = null;
             }
 
-            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = setInterval(matchTags, 500);
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = $wnd.setInterval(matchTags, 500);
             matchTags();
         }
     }-*/;
@@ -1800,14 +1795,42 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * Clear any annotations from the editor and reset the local <code>annotations</code> JsArray<AceAnnotation>
      */
     public native void clearAnnotations() /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (editor != null) {
-			editor.getSession().clearAnnotations();
-		} else {
-			console.log("editor == null. clearAnnotations() was not called successfully.");
-		}
+        try {
+            console.log("ENTER AceEditor.clearAnnotations()")
 
-		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::resetAnnotations();
+            var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+            if (editor != null) {
+                editor.getSession().clearAnnotations();
+            } else {
+                console.log("editor == null. clearAnnotations() was not called successfully.");
+            }
+
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::resetAnnotations();
+        } finally {
+            console.log("EXIT AceEditor.clearAnnotations()")
+        }
+    }-*/;
+
+    /**
+     * Clears out any markers displayed by the editor.
+     */
+    public native void clearMarkers() /*-{
+        try {
+            console.log("ENTER AceEditor.clearMarkers()");
+
+            var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+            if (editor != null) {
+                var session = editor.getSession();
+                var markers = session.getMarkers();
+                for (var markerIndex = 0, markerCount = markers.length; markerIndex < markerCount; ++markerIndex) {
+                    session.removeMarker(markers[markerIndex]);
+                }
+            } else {
+                console.log("editor == null. clearMarkers() was not called successfully.");
+            }
+        } finally {
+            console.log("EXIT AceEditor.clearMarkers()");
+        }
     }-*/;
 
     /**
