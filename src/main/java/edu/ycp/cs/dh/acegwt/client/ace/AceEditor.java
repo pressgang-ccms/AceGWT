@@ -404,6 +404,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         $wnd.setTimeout(function(){
             return function(me) {
                 console.log("\tForce resize and redisplay");
+                editor.resize();
                 me.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::redisplay()();
             } (this)
         }, 0);
@@ -454,16 +455,21 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * is resized. Calling this method works around the problem by forcing the underlying editor to redisplay itself fully. (?)
      */
     public native void redisplay() /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		try {
+            console.log("ENTER AceEditor.redisplay()");
+            var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
-		if (editor != null) {
-			editor.renderer.onResize(true);
-			editor.renderer.updateFull();
-			editor.resize();
-			editor.focus();
-		} else {
-			console.log("editor == null. redisplay() was not called successfully.");
-		}
+            if (editor != null) {
+                editor.renderer.onResize(true);
+                editor.renderer.updateFull();
+                editor.resize();
+                editor.focus();
+            } else {
+                console.log("editor == null. redisplay() was not called successfully.");
+            }
+        } finally {
+            console.log("EXIT AceEditor.redisplay()");
+        }
     }-*/;
 
     /**
@@ -1845,7 +1851,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 }
 
                 for (var markerIndex in behindMarkers) {
-                    console.log("Clearing behind marker " + inFrontMarkers[markerIndex].id);
+                    console.log("Clearing behind marker " + behindMarkers[markerIndex].id);
                     session.removeMarker(behindMarkers[markerIndex].id);
                 }
             } else {
