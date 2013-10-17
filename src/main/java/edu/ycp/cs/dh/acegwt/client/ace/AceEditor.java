@@ -405,7 +405,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             return function(me) {
                 console.log("\tForce resize and redisplay");
                 editor.resize();
-                me.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::redisplay()();
             } (this)
         }, 0);
 
