@@ -401,8 +401,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         // to display properly and receive key/mouse events.
         // Try to force the editor to resize and display itself fully.  See:
         //    https://groups.google.com/group/ace-discuss/browse_thread/thread/237262b521dcea33
-        console.log("\tForce resize and redisplay");
-        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::redisplay()();
+        $wnd.setTimeout(function(){
+            return function(me) {
+                console.log("\tForce resize and redisplay");
+                me.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::redisplay()();
+            } (this)
+        }, 0);
 
 		console.log("EXIT AceEditor.startEditorNative()");
 
@@ -1436,6 +1440,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			var negativeDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::negativeDictionary;
 			var negativePhraseDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::negativePhraseDictionary;
 
+
             if (editor == null) {
                 console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
                 return;
@@ -1452,9 +1457,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			//$wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='badword'] { position: absolute; z-index: -2; background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
 			//$wnd.jQuery("<style type='text/css'>div[class^='badword'] { background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
 
+            var markersPresent  = [];
             var contentsModified = true;
 			var currentlySpellchecking = false;
-			var markersPresent = [];
             var dictionaryLoadedInWorker = false;
 
             // Check for changes to the text
@@ -1480,7 +1485,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 					for (var i in markersPresent) {
 						session.removeMarker(markersPresent[i]);
 					}
-					markersPresent = [];
+                    markersPresent =  [];
 
 					var Range = $wnd.ace.require('ace/range').Range;
 
@@ -1690,8 +1695,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker = new Worker("javascript/tagdb/tagdb.js");
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
 
-            tagMatchingWorker.addEventListener('message', function(e){
+            tagMatchingWorker.addEventListener('message', function(e) {
                 try {
+                    console.log("tagMatchingWorker message received.");
+
                     if (editor == null) {
                         return;
                     }
@@ -1812,22 +1819,39 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     }-*/;
 
     /**
-     * Clears out any markers displayed by the editor.
+     * Clears out any markers displayed by the editor. The documentation suggests that an array
+     * is returned by getMarkers(). This is incorrect. It is actually an object, which is important
+     * because it means you can't use the .length property.
+     *
+     * session.getMarkers(false) will return something like
+     * {"1":{"range":{"start":{"row":0,"column":0},"end":{"row":0,"column":null},"id":1},"type":"screenLine","renderer":null,"clazz":"ace_active-line","inFront":false,"id":1},"2":{"regExp":false,"cache":[],"clazz":"ace_selected-word","type":"text","id":2,"inFront":false}}
+     *
+     * session.getMarkers(true) will return something like
+     * {"3":{"range":{"start":{"row":7,"column":15},"end":{"row":7,"column":19}},"type":"tagmatch","renderer":null,"clazz":"tagmatch-7-15-19","inFront":true,"id":3},"4":{"range":{"start":{"row":11,"column":4},"end":{"row":11,"column":9}},"type":"typo","renderer":null,"clazz":"badphrase-11-4-9","inFront":true,"id":4},"5":{"range":{"start":{"row":16,"column":4},"end":{"row":16,"column":19}},"type":"typo","renderer":null,"clazz":"badphrase-16-4-19","inFront":true,"id":5},"6":{"range":{"start":{"row":21,"column":4},"end":{"row":21,"column":36}},"type":"typo","renderer":null,"clazz":"badphrase-21-4-36","inFront":true,"id":6},"7":{"range":{"start":{"row":26,"column":4},"end":{"row":26,"column":18}},"type":"typo","renderer":null,"clazz":"badphrase-26-4-18","inFront":true,"id":7},"8":{"range":{"start":{"row":36,"column":4},"end":{"row":36,"column":9}},"type":"typo","renderer":null,"clazz":"badword-36-4-9","inFront":true,"id":8},"9":{"range":{"start":{"row":41,"column":4},"end":{"row":41,"column":13}},"type":"typo","renderer":null,"clazz":"badword-41-4-13","inFront":true,"id":9},"10":{"range":{"start":{"row":46,"column":4},"end":{"row":46,"column":12}},"type":"typo","renderer":null,"clazz":"badword-46-4-12","inFront":true,"id":10},"11":{"range":{"start":{"row":56,"column":4},"end":{"row":56,"column":13}},"type":"typo","renderer":null,"clazz":"misspelled-56-4-13","inFront":true,"id":11},"12":{"range":{"start":{"row":61,"column":4},"end":{"row":61,"column":9}},"type":"typo","renderer":null,"clazz":"misspelled-61-4-9","inFront":true,"id":12},"13":{"range":{"start":{"row":66,"column":4},"end":{"row":66,"column":9}},"type":"typo","renderer":null,"clazz":"misspelled-66-4-9","inFront":true,"id":13}}
      */
     public native void clearMarkers() /*-{
         try {
             console.log("ENTER AceEditor.clearMarkers()");
-
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
             if (editor != null) {
                 var session = editor.getSession();
-                var markers = session.getMarkers();
-                for (var markerIndex = 0, markerCount = markers.length; markerIndex < markerCount; ++markerIndex) {
-                    session.removeMarker(markers[markerIndex]);
+                var inFrontMarkers = session.getMarkers(true);
+                var behindMarkers = session.getMarkers(false);
+
+                for (var markerIndex in inFrontMarkers) {
+                    console.log("Clearing infront marker " + inFrontMarkers[markerIndex].id);
+                    session.removeMarker(inFrontMarkers[markerIndex].id);
+                }
+
+                for (var markerIndex in behindMarkers) {
+                    console.log("Clearing behind marker " + inFrontMarkers[markerIndex].id);
+                    session.removeMarker(behindMarkers[markerIndex].id);
                 }
             } else {
                 console.log("editor == null. clearMarkers() was not called successfully.");
             }
+
         } finally {
             console.log("EXIT AceEditor.clearMarkers()");
         }
