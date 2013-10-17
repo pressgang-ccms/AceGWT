@@ -1845,12 +1845,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 var behindMarkers = session.getMarkers(false);
 
                 for (var markerIndex in inFrontMarkers) {
-                    console.log("Clearing infront marker " + inFrontMarkers[markerIndex].id);
+                    //console.log("Clearing infront marker " + inFrontMarkers[markerIndex].id);
                     session.removeMarker(inFrontMarkers[markerIndex].id);
                 }
 
                 for (var markerIndex in behindMarkers) {
-                    console.log("Clearing behind marker " + behindMarkers[markerIndex].id);
+                    //console.log("Clearing behind marker " + behindMarkers[markerIndex].id);
                     session.removeMarker(behindMarkers[markerIndex].id);
                 }
             } else {
