@@ -162,6 +162,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * This value is used as a buffer to hold the spec metadata matching state before the editor is created
      */
     private boolean enableSpecMatching = false;
+    private boolean enableSpellChecking = true;
 
     /**
      * The spell checking web worker
@@ -382,7 +383,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
         console.log("\t\tEnabling Spell Checking");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setupContextMenu()();
-        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
+
+        if (enableSpellChecking) {
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
+        }
 
         if (enableTagMatching) {
 			console.log("\t\tEnabling Tag Matching");
@@ -1045,9 +1049,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
         var positiveDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary;
         var tagDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagDB;
+        var readOnly = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::readOnly;
 
         if (editor == null) {
-            console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
+            console.log("editor == null. setupContextMenu() was not called successfully.");
             return;
         }
 
@@ -1280,15 +1285,17 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                         var suggestion = suggestions[i];
                                         option[suggestion] = function(suggestion, wordData){
                                             return function(menuItem,menu){
-                                                var currentScroll = editor.getSession().getScrollTop();
-                                                editor.getSession().setValue(
-                                                    replaceWord(
-                                                        editor.getSession().getValue(),
-                                                        wordData.line,
-                                                        wordData.start,
-                                                        wordData.end,
-                                                        suggestion));
-                                                editor.getSession().setScrollTop(currentScroll);
+                                                if (!readOnly) {
+                                                    var currentScroll = editor.getSession().getScrollTop();
+                                                    editor.getSession().setValue(
+                                                        replaceWord(
+                                                            editor.getSession().getValue(),
+                                                            wordData.line,
+                                                            wordData.start,
+                                                            wordData.end,
+                                                            suggestion));
+                                                    editor.getSession().setScrollTop(currentScroll);
+                                                }
                                             };
                                         }(suggestion, wordData);
 
@@ -2013,4 +2020,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         }
         return null;
     }-*/;
+
+    /**
+     * This value is used as a buffer to hold the spell checking state before the editor is created
+     */
+    public boolean isEnableSpellChecking() {
+        return enableSpellChecking;
+    }
+
+    public void setEnableSpellChecking(final boolean enableSpellChecking) {
+        this.enableSpellChecking = enableSpellChecking;
+    }
 }
