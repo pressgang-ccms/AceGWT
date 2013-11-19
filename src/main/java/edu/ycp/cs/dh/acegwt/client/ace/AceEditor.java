@@ -289,6 +289,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         var enableSpecMatching = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpecMatching;
         var enableBehaviours = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableBehaviours;
         var showGutter = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::showGutter;
+        var enableSpellChecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellChecking;
 
 		if ($wnd.ace == undefined) {
 			$wnd.alert("window.ace is undefined! Please make sure you have included the appropriate JavaScript files.");
