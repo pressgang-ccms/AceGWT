@@ -139,6 +139,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private boolean showInvisibles = false;
     /**
+     * This value is used as a buffer to hold the "enable behaviours" state before the editor is created
+     */
+    private boolean enableBehaviours = true;
+    /**
      * This value is used as a buffer to hold the theme state before the editor is created
      */
     private String themeName;
@@ -151,6 +155,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private String fontFamily;
     /**
+     * This value is used as a buffer to hold the tag matching state before the editor is created
+     */
+    private boolean enableTagMatching = false;
+    /**
+     * This value is used as a buffer to hold the spec metadata matching state before the editor is created
+     */
+    private boolean enableSpecMatching = false;
+
+    /**
      * The spell checking web worker
      */
     private JavaScriptObject spellCheckingWorker;
@@ -158,6 +171,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * The tag matching web worker
      */
     private JavaScriptObject tagMatchingWorker;
+    /**
+     * The tag matching web worker
+     */
+    private JavaScriptObject specMatchingWorker;
 
     /**
      * This constructor will only work if the <code>.ace_editor</code> CSS class is set with
@@ -166,23 +183,23 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     @Deprecated
     public AceEditor() {
-        this(false, null, null, null, null);
+        this(false, null, null, null, null, false, false);
     }
 
     public AceEditor(final boolean positionAbsolute) {
-        this(positionAbsolute, null, null, null, null);
+        this(positionAbsolute, null, null, null, null, false, false);
     }
 
     public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary) {
-        this(positionAbsolute, positiveDictionary, null, null, null);
+        this(positionAbsolute, positiveDictionary, null, null, null, false, false);
     }
 
     public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary, final TypoJS negativeDictionary) {
-        this(positionAbsolute, positiveDictionary, negativeDictionary, null, null);
+        this(positionAbsolute, positiveDictionary, negativeDictionary, null, null, false, false);
     }
 
     public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary, final TypoJS negativeDictionary, final TypoJS negativePhraseDictionary) {
-        this(positionAbsolute, positiveDictionary, negativeDictionary, negativePhraseDictionary, null);
+        this(positionAbsolute, positiveDictionary, negativeDictionary, negativePhraseDictionary, null, false, false);
     }
 
     /**
@@ -203,11 +220,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                      final TypoJS positiveDictionary,
                      final TypoJS negativeDictionary,
                      final TypoJS negativePhraseDictionary,
-                     final TagDB tagDB) {
+                     final TagDB tagDB,
+                     final boolean enableTagMatching,
+                     final boolean enableSpecMatching) {
         this.positiveDictionary = positiveDictionary;
         this.negativeDictionary = negativeDictionary;
         this.negativePhraseDictionary = negativePhraseDictionary;
         this.tagDB = tagDB;
+        this.enableTagMatching = enableTagMatching;
+        this.enableSpecMatching = enableSpecMatching;
 
         elementId = "_aceGWT" + nextId;
         nextId++;
@@ -244,15 +265,29 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     /**
      * Call this method to start the editor. Make sure that the widget has been attached to the DOM tree before calling this
      * method.
-     * 
-     * @param text The initial text to be placed into the editor
      */
-    private native void startEditorNative(final String text, final String themeName, final String shortModeName,
-            final boolean readOnly, final boolean useSoftTabs, final int tabSize, final boolean hScrollBarAlwaysVisible,
-            final boolean showGutter, final boolean highlightSelectedWord, final boolean showPrintMargin,
-            final boolean userWrap, final boolean showInvisibles, final String fontSize, final String fontFamily) /*-{
+    private native void startEditorNative() /*-{
 
 		console.log("ENTER AceEditor.startEditorNative()");
+
+        var text = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::text;
+        var themeName = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::themeName;
+        var mode = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::mode;
+        var shortModeName = mode ? mode.@edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode::getName()() : null;
+        var readOnly = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::readOnly;
+        var useSoftTabs = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::useSoftTabs;
+        var tabSize = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tabSize;
+        var hScrollBarAlwaysVisible = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::hScrollBarAlwaysVisible;
+        var highlightSelectedWord = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::highlightSelectedWord;
+        var showPrintMargin = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::showPrintMargin;
+        var userWrap = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::useWrap;
+        var showInvisibles = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::showInvisibles;
+        var fontSize = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::fontSize;
+        var fontFamily = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::fontFamily;
+        var enableTagMatching = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableTagMatching;
+        var enableSpecMatching = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpecMatching;
+        var enableBehaviours = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableBehaviours;
+        var showGutter = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::showGutter;
 
 		if ($wnd.ace == undefined) {
 			$wnd.alert("window.ace is undefined! Please make sure you have included the appropriate JavaScript files.");
@@ -263,14 +298,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 		var editor = $wnd.ace.edit(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId);
 		editor.getSession().setUseWorker(false);
 		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = editor;
-
-		// I have been noticing sporadic failures of the editor
-		// to display properly and receive key/mouse events.
-		// Try to force the editor to resize and display itself fully.  See:
-		//    https://groups.google.com/group/ace-discuss/browse_thread/thread/237262b521dcea33
-		console.log("\tForce resize and redisplay");
-		editor.resize();
-		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::redisplay();
 
 		console.log("\tSetting Options");
 		// Set code folding (choose from manual, markbegin, markbeginend)
@@ -320,17 +347,24 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 		// Set wrapping. 
 		console.log("\t\tSetting User Wrap");
-        
         editor.getSession().setUseWrapMode(false);
-        
+
         if (userWrap) {
             editor.getSession().setUseWrapMode(true);
         }
 
+        // Set wrapping.
+        console.log("\t\tSetting Behaviours");
+        editor.setBehavioursEnabled(enableBehaviours);
+
+        // Set font size
+        console.log("\t\tSetting Font Size");
         if (fontSize != null) {
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setFontSizeNative(Ljava/lang/String;)(fontSize);
         }
 
+        // Set font family.
+        console.log("\t\tSetting Font Family");
         if (fontFamily != null) {
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setFontFamilyNative(Ljava/lang/String;)(fontFamily);
         }
@@ -349,10 +383,30 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         console.log("\t\tEnabling Spell Checking");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setupContextMenu()();
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
-        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableTagMatching()();
+
+        if (enableTagMatching) {
+			console.log("\t\tEnabling Tag Matching");
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableTagMatching()();
+        }
+
+		if (enableSpecMatching) {
+			console.log("\t\tEnabling Spec Matching");
+			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpecMatching()();
+		}
 
         console.log("\t\tEnabling Snippets");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSnippets()();
+
+        // I have been noticing sporadic failures of the editor
+        // to display properly and receive key/mouse events.
+        // Try to force the editor to resize and display itself fully.  See:
+        //    https://groups.google.com/group/ace-discuss/browse_thread/thread/237262b521dcea33
+        $wnd.setTimeout(function(){
+            return function(me) {
+                console.log("\tForce resize and redisplay");
+                editor.resize();
+            } (this)
+        }, 0);
 
 		console.log("EXIT AceEditor.startEditorNative()");
 
@@ -390,9 +444,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     {
         logger.log(Level.INFO, "ENTER AceEditor.onLoad()");
         super.onLoad();
-        startEditorNative(text, themeName, mode != null ? mode.getName() : null,
-                readOnly, useSoftTabs, tabSize, hScrollBarAlwaysVisible, showGutter, highlightSelectedWord,
-                showPrintMargin, useWrap, showInvisibles, fontSize, fontFamily);
+        startEditorNative();
         logger.log(Level.INFO, "EXIT AceEditor.onLoad()");
     }
 
@@ -402,16 +454,21 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * is resized. Calling this method works around the problem by forcing the underlying editor to redisplay itself fully. (?)
      */
     public native void redisplay() /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		try {
+            console.log("ENTER AceEditor.redisplay()");
+            var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
-		if (editor != null) {
-			editor.renderer.onResize(true);
-			editor.renderer.updateFull();
-			editor.resize();
-			editor.focus();
-		} else {
-			console.log("editor == null. redisplay() was not called successfully.");
-		}
+            if (editor != null) {
+                editor.renderer.onResize(true);
+                editor.renderer.updateFull();
+                editor.resize();
+                editor.focus();
+            } else {
+                console.log("editor == null. redisplay() was not called successfully.");
+            }
+        } finally {
+            console.log("EXIT AceEditor.redisplay()");
+        }
     }-*/;
 
     /**
@@ -426,16 +483,17 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var matchTagsInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval;
             var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
+            var specMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker;
 
             // clean up pending operations
             if (spellcheckInterval != null) {
-                clearInterval(spellcheckInterval);
+                $wnd.clearInterval(spellcheckInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = null;
             }
 
             // clean up pending operations
             if (matchTagsInterval != null) {
-                clearInterval(matchTagsInterval);
+                $wnd.clearInterval(matchTagsInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = null;
             }
 
@@ -449,16 +507,21 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker = null;
             }
 
+			if (specMatchingWorker != null) {
+				specMatchingWorker.terminate();
+				this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker = null;
+			}
+
             if (editor != null) {
 
                 //editor.getSession().removeAllListeners('change');
                 //editor.getSession().removeAllListeners('changeCursor');
 
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::clearAnnotations()();
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::clearMarkers()();
+
                 editor.destroy();
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = null;
-                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary = null;
-
-
             } else {
                 console.log("editor == null. destory() was not called successfully.");
             }
@@ -851,6 +914,25 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         setUseWrapModeNative(userWrap);
     }
 
+    public boolean getBehavioursEnabled() {
+        return this.enableBehaviours;
+    }
+
+    private native void setBehavioursEnabledNative(final boolean enableBehaviours) /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+        if (editor != null) {
+            editor.setBehavioursEnabled(enableBehaviours);
+        } else {
+            console.log("editor == null. setBehavioursEnabled() was not called successfully.");
+        }
+    }-*/;
+
+    public void setBehavioursEnabled(final boolean enableBehaviours) {
+        this.enableBehaviours = enableBehaviours;
+        setBehavioursEnabledNative(enableBehaviours);
+    }
+
     public boolean getUserWrapMode() {
         return this.useWrap;
     }
@@ -1220,8 +1302,17 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                             };
                         }(this.wordData));
                     }
-                } else if (this.wordData.type == 'tag') {
+                } else if (this.wordData.type == 'tag' || this.wordData.type == 'spec') {
                     if (tagDB != null) {
+
+						var option = {};
+						var optionDetails = {};
+						optionDetails["onclick"] = function(menuItem,menu){};
+						optionDetails["disabled"] = true;
+						option["Loading. This can take a few seconds..."] = optionDetails;
+
+						callback([option]);
+
                         var database = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getDatabase()();
                         var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
                         if (topicId != null) {
@@ -1255,7 +1346,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                             optionDetails["onclick"] = function(menuItem,menu){};
                                             optionDetails["className"] = "ContextMenuIFrameParent";
                                             optionDetails["disabled"] = true;
-                                            option["<iframe class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
+                                            // Firefox will not add scrollbars to the iframe after rendering an XML document. So we
+                                            // need to force the scrollbars by explictly setting the overflow style on the parent
+                                            // div, which will trigger the scrollbars to be made visible.
+                                            option["<iframe onload=\"javascript:document.getElementsByClassName('ContextMenuIFrame')[0].parentNode.style.overflow='auto'\" class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
 
                                             // Add an option to open the topic in a new window
                                             var editOption = {};
@@ -1265,6 +1359,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                             };
                                             editOption["Edit this topic"] = editOptionDetails;
 
+											cmenu.hide();
                                             callback([option, editOption]);
                                         }
                                     });
@@ -1284,7 +1379,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 // various workers created to scan the text and look for certain elements.
                 // the span with the class ace_numeric is part of the theme.
 
-                $wnd.jQuery("div[class^='misspelled'], div[class^='badword'], div[class^='tagmatch'], span[class*='ace_numeric']").each(
+                $wnd.jQuery("div[class^='misspelled'], div[class^='badword'], div[class^='tagmatch'], div[class^='specmatch'], span[class*='ace_numeric']").each(
                     function(wordData){
                         return function(){
                             if ($wnd.jQuery(this).offset().left <= event.clientX &&
@@ -1296,12 +1391,19 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                                 if (classAttribute != null) {
 
-                                    var matches = /(misspelled|badword|tagmatch)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
+                                    var matches = /(misspelled|badword|tagmatch|specmatch)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
                                     if (matches != null && matches.length >= 5) {
 
                                         retValue = true;
 
-                                        wordData['type'] = matches[1] == 'tagmatch' ? 'tag' : 'spelling';
+                                        if (matches[1] == 'tagmatch') {
+											wordData['type'] = 'tag';
+                                        } else if (matches[1] == 'specmatch') {
+											wordData['type'] = 'spec';
+										} else  {
+											wordData['type'] = 'spelling';
+										}
+
                                         wordData['line'] = matches[2];
                                         wordData['start'] = matches[3];
                                         wordData['end'] = matches[4];
@@ -1343,6 +1445,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			var negativeDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::negativeDictionary;
 			var negativePhraseDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::negativePhraseDictionary;
 
+
             if (editor == null) {
                 console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
                 return;
@@ -1359,9 +1462,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			//$wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='badword'] { position: absolute; z-index: -2; background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
 			//$wnd.jQuery("<style type='text/css'>div[class^='badword'] { background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
 
+            var markersPresent  = [];
             var contentsModified = true;
 			var currentlySpellchecking = false;
-			var markersPresent = [];
             var dictionaryLoadedInWorker = false;
 
             // Check for changes to the text
@@ -1387,7 +1490,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 					for (var i in markersPresent) {
 						session.removeMarker(markersPresent[i]);
 					}
-					markersPresent = [];
+                    markersPresent =  [];
 
 					var Range = $wnd.ace.require('ace/range').Range;
 
@@ -1468,11 +1571,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             // Enable spell checking on regular intervals
             if (spellcheckInterval != null) {
-                clearInterval(spellcheckInterval);
+                $wnd.clearInterval(spellcheckInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = null;
             }
 
-            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = setInterval(spellCheck, 500);
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = $wnd.setInterval(spellCheck, 500);
             spellCheck();
 
         } finally {
@@ -1480,6 +1583,102 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         }
 
     }-*/;
+
+    private native void enableSpecMatching() /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		var tagDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagDB;
+
+		if (tagDB != null) {
+			var currentlyMatchingSpecMetadata = false;
+			var specMetadataMarkersPresent = [];
+			var specMetadataContentsModified = true;
+			var loaded = false;
+
+			// Check for changes to the text
+			editor.getSession().on('change', function(e) {
+				specMetadataContentsModified = true;
+			});
+
+			// Build the web worker to match tags
+
+			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker = new Worker("javascript/tagdb/contentSpecTagDB.js");
+			var specMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker;
+
+			specMatchingWorker.addEventListener('message', function(e){
+				try {
+					if (editor == null) {
+						return;
+					}
+
+					var lineData = e.data;
+
+					var session = editor.getSession();
+
+					// Clear the markers.
+					for (var i in specMetadataMarkersPresent) {
+						session.removeMarker(specMetadataMarkersPresent[i]);
+					}
+					specMetadataMarkersPresent = [];
+
+					var Range = $wnd.ace.require('ace/range').Range;
+
+					for (var lineDataIndex = 0, lineDataLength = lineData.length; lineDataIndex < lineDataLength; ++lineDataIndex) {
+						var specMatches = lineData[lineDataIndex];
+
+						for (var j in specMatches) {
+							var range = new Range(lineDataIndex, specMatches[j][0], lineDataIndex, specMatches[j][1]);
+							specMetadataMarkersPresent[specMetadataMarkersPresent.length] = session.addMarker(
+								range,
+								"specmatch-" + lineDataIndex + "-" + specMatches[j][0] + "-" + specMatches[j][1],
+								"specmatch",
+								true);
+						}
+
+					}
+				} finally {
+					currentlyMatchingSpecMetadata = false;
+				}
+			});
+
+
+			var matchSpecMetadata = function() {
+				if (!tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::isLoaded()()) {
+					console.log("Waiting for tag database to load.");
+					return;
+				}
+
+				if (currentlyMatchingSpecMetadata) {
+					return;
+				}
+
+				if (!specMetadataContentsModified) {
+					return;
+				}
+
+				if (!loaded) {
+					// Set the tag db
+					specMatchingWorker.postMessage({tagDB: tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getJSONDatabase()()});
+					loaded = true;
+				}
+
+				console.log("Matching Spec Metadata");
+
+				currentlyMatchingSpecMetadata = true;
+				specMetadataContentsModified = false;
+
+				specMatchingWorker.postMessage({lines: editor.getSession().getDocument().getAllLines()});
+			};
+
+			// Enable tag matching on regular intervals
+			if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval != null) {
+				$wnd.clearInterval(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval);
+				this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = null;
+			}
+
+			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = $wnd.setInterval(matchSpecMetadata, 500);
+			matchSpecMetadata();
+		}
+	}-*/;
 
     private native void enableTagMatching() /*-{
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
@@ -1501,8 +1700,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker = new Worker("javascript/tagdb/tagdb.js");
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
 
-            tagMatchingWorker.addEventListener('message', function(e){
+            tagMatchingWorker.addEventListener('message', function(e) {
                 try {
+                    console.log("tagMatchingWorker message received.");
+
                     if (editor == null) {
                         return;
                     }
@@ -1568,11 +1769,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             // Enable tag matching on regular intervals
             if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval != null) {
-                clearInterval(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval);
+                $wnd.clearInterval(this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = null;
             }
 
-            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = setInterval(matchTags, 500);
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = $wnd.setInterval(matchTags, 500);
             matchTags();
         }
     }-*/;
@@ -1606,14 +1807,59 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * Clear any annotations from the editor and reset the local <code>annotations</code> JsArray<AceAnnotation>
      */
     public native void clearAnnotations() /*-{
-		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		if (editor != null) {
-			editor.getSession().clearAnnotations();
-		} else {
-			console.log("editor == null. clearAnnotations() was not called successfully.");
-		}
+        try {
+            console.log("ENTER AceEditor.clearAnnotations()")
 
-		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::resetAnnotations();
+            var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+            if (editor != null) {
+                editor.getSession().clearAnnotations();
+            } else {
+                console.log("editor == null. clearAnnotations() was not called successfully.");
+            }
+
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::resetAnnotations();
+        } finally {
+            console.log("EXIT AceEditor.clearAnnotations()")
+        }
+    }-*/;
+
+    /**
+     * Clears out any markers displayed by the editor. The documentation suggests that an array
+     * is returned by getMarkers(). This is incorrect. It is actually an object, which is important
+     * because it means you can't use the .length property.
+     *
+     * session.getMarkers(false) will return something like
+     * {"1":{"range":{"start":{"row":0,"column":0},"end":{"row":0,"column":null},"id":1},"type":"screenLine","renderer":null,"clazz":"ace_active-line","inFront":false,"id":1},"2":{"regExp":false,"cache":[],"clazz":"ace_selected-word","type":"text","id":2,"inFront":false}}
+     *
+     * session.getMarkers(true) will return something like
+     * {"3":{"range":{"start":{"row":7,"column":15},"end":{"row":7,"column":19}},"type":"tagmatch","renderer":null,"clazz":"tagmatch-7-15-19","inFront":true,"id":3},"4":{"range":{"start":{"row":11,"column":4},"end":{"row":11,"column":9}},"type":"typo","renderer":null,"clazz":"badphrase-11-4-9","inFront":true,"id":4},"5":{"range":{"start":{"row":16,"column":4},"end":{"row":16,"column":19}},"type":"typo","renderer":null,"clazz":"badphrase-16-4-19","inFront":true,"id":5},"6":{"range":{"start":{"row":21,"column":4},"end":{"row":21,"column":36}},"type":"typo","renderer":null,"clazz":"badphrase-21-4-36","inFront":true,"id":6},"7":{"range":{"start":{"row":26,"column":4},"end":{"row":26,"column":18}},"type":"typo","renderer":null,"clazz":"badphrase-26-4-18","inFront":true,"id":7},"8":{"range":{"start":{"row":36,"column":4},"end":{"row":36,"column":9}},"type":"typo","renderer":null,"clazz":"badword-36-4-9","inFront":true,"id":8},"9":{"range":{"start":{"row":41,"column":4},"end":{"row":41,"column":13}},"type":"typo","renderer":null,"clazz":"badword-41-4-13","inFront":true,"id":9},"10":{"range":{"start":{"row":46,"column":4},"end":{"row":46,"column":12}},"type":"typo","renderer":null,"clazz":"badword-46-4-12","inFront":true,"id":10},"11":{"range":{"start":{"row":56,"column":4},"end":{"row":56,"column":13}},"type":"typo","renderer":null,"clazz":"misspelled-56-4-13","inFront":true,"id":11},"12":{"range":{"start":{"row":61,"column":4},"end":{"row":61,"column":9}},"type":"typo","renderer":null,"clazz":"misspelled-61-4-9","inFront":true,"id":12},"13":{"range":{"start":{"row":66,"column":4},"end":{"row":66,"column":9}},"type":"typo","renderer":null,"clazz":"misspelled-66-4-9","inFront":true,"id":13}}
+     */
+    public native void clearMarkers() /*-{
+        try {
+            console.log("ENTER AceEditor.clearMarkers()");
+            var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+            if (editor != null) {
+                var session = editor.getSession();
+                var inFrontMarkers = session.getMarkers(true);
+                var behindMarkers = session.getMarkers(false);
+
+                for (var markerIndex in inFrontMarkers) {
+                    //console.log("Clearing infront marker " + inFrontMarkers[markerIndex].id);
+                    session.removeMarker(inFrontMarkers[markerIndex].id);
+                }
+
+                for (var markerIndex in behindMarkers) {
+                    //console.log("Clearing behind marker " + behindMarkers[markerIndex].id);
+                    session.removeMarker(behindMarkers[markerIndex].id);
+                }
+            } else {
+                console.log("editor == null. clearMarkers() was not called successfully.");
+            }
+
+        } finally {
+            console.log("EXIT AceEditor.clearMarkers()");
+        }
     }-*/;
 
     /**
