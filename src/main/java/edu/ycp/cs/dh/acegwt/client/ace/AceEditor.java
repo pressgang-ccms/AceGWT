@@ -1325,8 +1325,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                         var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
                         if (topicId != null) {
                             processingSuggestions = true;
-                            var restServerCallback = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getGetRESTServerCallback()();
-                            var restServer = restServerCallback.@edu.ycp.cs.dh.acegwt.client.tagdb.GetRESTServerCallback::getBaseRESTURL()();
+                            var restServer = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getRestEndpoint()();
 
                             // get the topic XML
                             var getTopicRestUrl = restServer + "/1/topic/get/json/" + topicId;
