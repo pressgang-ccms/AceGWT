@@ -1037,8 +1037,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 		var session = editor.getSession();
 
+        var added = [];
+
         for (var i = 0, lineNumbersLength = lineNumbers.length; i < lineNumbersLength; ++i) {
-			session.addGutterDecoration(lineNumbers[i], style);
+			if ($wnd.jQuery.inArray(lineNumbers[i], added) == -1) {
+                session.addGutterDecoration(lineNumbers[i], style);
+                added.push(lineNumbers[i]);
+            }
 		}
     }-*/;
 
