@@ -1484,6 +1484,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var markersPresent  = [];
             var contentsModified = true;
             var currentlyCheckingConditions = false;
+            var lastCondition = null;
 
             // Check for changes to the text
             editor.getSession().on('change', function(e) {
@@ -1536,19 +1537,22 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                         return;
                     }
 
-                    if (!contentsModified) {
+                    var condition = me.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::condition;
+
+                    if (!contentsModified && (lastCondition == condition)) {
                         return;
                     }
 
                     console.log("Checking Conditions");
 
+                    lastCondition = condition;
                     currentlyCheckingConditions = true;
                     contentsModified = false;
 
                     conditionalMatchingWorker.postMessage(
                         {
                             text: editor.getSession().getValue(),
-                            condition: me.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::condition
+                            condition: condition
                         }
                     );
                 }
