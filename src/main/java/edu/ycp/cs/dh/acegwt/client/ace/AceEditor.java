@@ -1485,7 +1485,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             });
 
             // Setup a worker to perform the spell checking, and handle the results
-            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker = new Worker("javascript/highlighters/conditional.js");
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::conditionalMatchingWorker = new Worker("javascript/highlighters/conditional.js");
             var conditionalMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::conditionalMatchingWorker;
 
             conditionalMatchingWorker.addEventListener('message', function(e){
@@ -1533,7 +1533,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     return;
                 }
 
-                console.log("Checking Spelling");
+                console.log("Checking Conditions");
 
                 currentlyCheckingConditions = true;
                 contentsModified = false;
