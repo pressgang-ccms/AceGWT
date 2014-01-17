@@ -1530,26 +1530,28 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 }
             });
 
-            var checkConditions = function() {
-                if (currentlyCheckingConditions) {
-                    return;
-                }
-
-                if (!contentsModified) {
-                    return;
-                }
-
-                console.log("Checking Conditions");
-
-                currentlyCheckingConditions = true;
-                contentsModified = false;
-
-                conditionalMatchingWorker.postMessage(
-                    {
-                        text: editor.getSession().getValue(),
-                        condition: this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::condition
+            var checkConditions = function(me) {
+                return function() {
+                    if (currentlyCheckingConditions) {
+                        return;
                     }
-                );
+
+                    if (!contentsModified) {
+                        return;
+                    }
+
+                    console.log("Checking Conditions");
+
+                    currentlyCheckingConditions = true;
+                    contentsModified = false;
+
+                    conditionalMatchingWorker.postMessage(
+                        {
+                            text: editor.getSession().getValue(),
+                            condition: me.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::condition
+                        }
+                    );
+                }
             }
 
             // Enable condition checking on regular intervals
@@ -1558,8 +1560,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval = null;
             }
 
-            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval = $wnd.setInterval(checkConditions, 500);
-            checkConditions();
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval = $wnd.setInterval(checkConditions(this), 500);
+            checkConditions(this)();
 
         } finally {
             console.log("EXIT AceEditor.enableConditionalMatchingNative()");
