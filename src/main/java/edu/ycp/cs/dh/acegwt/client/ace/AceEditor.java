@@ -85,6 +85,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private JavaScriptObject spellcheckInterval;
     private JavaScriptObject matchTagsInterval;
+    private JavaScriptObject checkConditionsInterval;
 
     private JsArray<AceAnnotation> annotations = JavaScriptObject.createArray().cast();
     
@@ -163,6 +164,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private boolean enableSpecMatching = false;
     private boolean enableSpellChecking = true;
+    private boolean enableConditionalChecking = true;
+    /**
+     * The current condition used to include or exclude xml elements
+     */
+    private String condition;
 
     /**
      * The spell checking web worker
@@ -176,6 +182,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * The tag matching web worker
      */
     private JavaScriptObject specMatchingWorker;
+    /**
+     * The conditional matching web worker
+     */
+    private JavaScriptObject conditionalMatchingWorker;
 
     /**
      * This constructor will only work if the <code>.ace_editor</code> CSS class is set with
@@ -290,6 +300,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         var enableBehaviours = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableBehaviours;
         var showGutter = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::showGutter;
         var enableSpellChecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellChecking;
+        var enableConditionalChecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableConditionalChecking;
 
 		if ($wnd.ace == undefined) {
 			$wnd.alert("window.ace is undefined! Please make sure you have included the appropriate JavaScript files.");
@@ -389,6 +400,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
         }
 
+        if (enableConditionalChecking) {
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableConditionalMatchingNative()();
+        }
+
         if (enableTagMatching) {
 			console.log("\t\tEnabling Tag Matching");
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableTagMatching()();
@@ -485,6 +500,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
+            var checkConditionsInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval;
             var matchTagsInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval;
             var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
@@ -494,6 +510,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             if (spellcheckInterval != null) {
                 $wnd.clearInterval(spellcheckInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval = null;
+            }
+
+            if (checkConditionsInterval != null) {
+                $wnd.clearInterval(checkConditionsInterval);
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval = null;
             }
 
             // clean up pending operations
@@ -1441,6 +1462,105 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         }});
     }-*/;
 
+    private native void enableConditionalMatchingNative() /*-{
+
+        try {
+            console.log("ENTER AceEditor.enableConditionalMatchingNative()");
+
+            var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+            var checkConditionsInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval;
+
+            if (editor == null) {
+                console.log("editor == null. enableConditionalMatchingNative() was not called successfully.");
+                return;
+            }
+
+            var markersPresent  = [];
+            var contentsModified = true;
+            var currentlyCheckingConditions = false;
+
+            // Check for changes to the text
+            editor.getSession().on('change', function(e) {
+                contentsModified = true;
+            });
+
+            // Setup a worker to perform the spell checking, and handle the results
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker = new Worker("javascript/highlighters/conditional.js");
+            var conditionalMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::conditionalMatchingWorker;
+
+            conditionalMatchingWorker.addEventListener('message', function(e){
+                try {
+                    if (editor == null) {
+                        return;
+                    }
+
+                    var lineData = e.data;
+
+                    var session = editor.getSession();
+
+                    // Clear the markers.
+                    for (var i in markersPresent) {
+                        session.removeMarker(markersPresent[i]);
+                    }
+                    markersPresent =  [];
+
+                    var Range = $wnd.ace.require('ace/range').Range;
+
+                    for (var lineDataIndex = 0, lineDataLength = lineData.length; lineDataIndex < lineDataLength; ++lineDataIndex) {
+
+                        var conditionalExclusion = lineData[lineDataIndex];
+
+                        var range = new Range(conditionalExclusion.line, conditionalExclusion.start, conditionalExclusion.line, conditionalExclusion.end);
+                        markersPresent[markersPresent.length] = session.addMarker(
+                            range,
+                            "conditionExclusion",
+                            "conditional",
+                            true);
+
+
+                    }
+                } finally {
+                    currentlyCheckingConditions = false;
+                }
+            });
+
+            var checkConditions = function() {
+                if (currentlyCheckingConditions) {
+                    return;
+                }
+
+                if (!contentsModified) {
+                    return;
+                }
+
+                console.log("Checking Spelling");
+
+                currentlyCheckingConditions = true;
+                contentsModified = false;
+
+                conditionalMatchingWorker.postMessage(
+                    {
+                        text: editor.getSession().getValue(),
+                        condition: this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::condition
+                    }
+                );
+            }
+
+            // Enable spell checking on regular intervals
+            if (checkConditionsInterval != null) {
+                $wnd.clearInterval(checkConditionsInterval);
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval = null;
+            }
+
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval = $wnd.setInterval(checkConditions, 500);
+            checkConditions();
+
+        } finally {
+            console.log("EXIT AceEditor.enableConditionalMatchingNative()");
+        }
+
+    }-*/;
+
     /**
      * Enable spell checking.
      * This requires that the project that is including this artifact include typo.js and jquery in the main HTML file,
@@ -2035,5 +2155,21 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     public void setEnableSpellChecking(final boolean enableSpellChecking) {
         this.enableSpellChecking = enableSpellChecking;
+    }
+
+    /**
+     * This value is used as a buffer to hold the conditional checking state before the editor is created
+     */
+    public boolean isEnableConditionalChecking() {
+        return enableConditionalChecking;
+    }
+
+    public void setEnableConditionalChecking(final boolean enableConditionalChecking) {
+        this.enableConditionalChecking = enableConditionalChecking;
+    }
+
+
+    public void setCondition(final String condition) {
+        this.condition = condition;
     }
 }
