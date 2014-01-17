@@ -503,6 +503,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var checkConditionsInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval;
             var matchTagsInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval;
             var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
+            var conditionalMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::conditionalMatchingWorker;
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
             var specMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker;
 
@@ -526,6 +527,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             if (spellingWorker != null) {
                 spellingWorker.terminate();
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker = null;
+            }
+
+            if (conditionalMatchingWorker != null) {
+                conditionalMatchingWorker.terminate();
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::conditionalMatchingWorker = null;
             }
 
             if (tagMatchingWorker != null) {
@@ -1546,7 +1552,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 );
             }
 
-            // Enable spell checking on regular intervals
+            // Enable condition checking on regular intervals
             if (checkConditionsInterval != null) {
                 $wnd.clearInterval(checkConditionsInterval);
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval = null;
