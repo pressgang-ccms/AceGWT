@@ -5,7 +5,7 @@ import com.google.gwt.json.client.JSONObject;
 /**
  * Holds a collection of XML tag names and a description of that tag
  */
-public class TagDB {
+public class XMLElementDB {
     private boolean loaded = false;
     private final JSONObject database = new JSONObject();
     private String restEndpoint;
@@ -39,7 +39,7 @@ public class TagDB {
         return database.toString();
     }
 
-    public TagDB() {
+    public XMLElementDB() {
 
     }
 

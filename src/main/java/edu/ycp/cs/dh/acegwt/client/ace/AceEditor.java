@@ -30,7 +30,7 @@ import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
-import edu.ycp.cs.dh.acegwt.client.tagdb.TagDB;
+import edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB;
 import edu.ycp.cs.dh.acegwt.client.typo.TypoJS;
 
 /**
@@ -75,11 +75,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private static int nextId = 0;
 
     private final String elementId;
+    private final String restUrl;
 
     private final TypoJS positiveDictionary;
     private final TypoJS negativeDictionary;
     private final TypoJS negativePhraseDictionary;
-    private final TagDB tagDB;
+    private final XMLElementDB xmlElementDB;
 
     private JavaScriptObject editor;
 
@@ -194,23 +195,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     @Deprecated
     public AceEditor() {
-        this(false, null, null, null, null, false, false);
+        this(false, null, false, false);
     }
 
     public AceEditor(final boolean positionAbsolute) {
-        this(positionAbsolute, null, null, null, null, false, false);
+        this(positionAbsolute, null, false, false);
     }
 
-    public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary) {
-        this(positionAbsolute, positiveDictionary, null, null, null, false, false);
-    }
-
-    public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary, final TypoJS negativeDictionary) {
-        this(positionAbsolute, positiveDictionary, negativeDictionary, null, null, false, false);
-    }
-
-    public AceEditor(final boolean positionAbsolute, final TypoJS positiveDictionary, final TypoJS negativeDictionary, final TypoJS negativePhraseDictionary) {
-        this(positionAbsolute, positiveDictionary, negativeDictionary, negativePhraseDictionary, null, false, false);
+    public AceEditor(final boolean positionAbsolute, final AceEditorData data) {
+        this(positionAbsolute, data, false, false);
     }
 
     /**
@@ -223,21 +216,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      *
      * If you have upgraded your version of the ACE javascript files, and you see nothing on the screen, try setting positionAbsolute
      * to false.
-     * 
+     *
      * @param positionAbsolute true if the <code>.ace_editor</code> CSS class is set with <code>position: absolute;</code>,
-     *        which is the default; false if <code>.ace_editor</code> is set to use <code>position: relative;</code>
      */
-    public AceEditor(final boolean positionAbsolute,
-                     final TypoJS positiveDictionary,
-                     final TypoJS negativeDictionary,
-                     final TypoJS negativePhraseDictionary,
-                     final TagDB tagDB,
-                     final boolean enableTagMatching,
-                     final boolean enableSpecMatching) {
-        this.positiveDictionary = positiveDictionary;
-        this.negativeDictionary = negativeDictionary;
-        this.negativePhraseDictionary = negativePhraseDictionary;
-        this.tagDB = tagDB;
+    public AceEditor(final boolean positionAbsolute, final AceEditorData data, final boolean enableTagMatching,
+            final boolean enableSpecMatching) {
+        restUrl = data == null ? null : data.getRestUrl();
+        positiveDictionary = data == null ? null : data.getPositiveDictionary();
+        negativeDictionary = data == null ? null : data.getNegativeDictionary();
+        negativePhraseDictionary = data == null ? null : data.getNegativePhraseDictionary();
+        xmlElementDB = data == null ? null : data.getXMLElementDB();
         this.enableTagMatching = enableTagMatching;
         this.enableSpecMatching = enableSpecMatching;
 
@@ -1081,8 +1069,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
         var positiveDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary;
-        var tagDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagDB;
+        var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
         var readOnly = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::readOnly;
+        var baseRESTUrl = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::restUrl;
 
         if (editor == null) {
             console.log("editor == null. setupContextMenu() was not called successfully.");
@@ -1136,7 +1125,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 // find out if the number that was clicked on is a topic
 
-                var getTopicRestUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/topic/get/json/" + this.wordData.value + "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22sourceUrls_OTM%22%7D%7D%2C%20%7B%22trunk%22%3A%7B%22name%22%3A%20%22revisions%22%2C%20%22start%22%3A0%2C%20%22end%22%3A5%7D%2C%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22logDetails%22%7D%7D%5D%7D%5D%7D";
+                var getTopicRestUrl = baseRESTUrl + "/1/topic/get/json/" + this.wordData.value + "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22sourceUrls_OTM%22%7D%7D%2C%20%7B%22trunk%22%3A%7B%22name%22%3A%20%22revisions%22%2C%20%22start%22%3A0%2C%20%22end%22%3A5%7D%2C%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22logDetails%22%7D%7D%5D%7D%5D%7D";
 
 				$wnd.jQuery.ajax({
 					dataType: "json",
@@ -1215,10 +1204,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 					}(this.wordData)
 				});
 
-				//var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + wordData.value +
-				//    "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%7D%5D%7D%5D%7D";
-
-				var contentSpecRESTUrl = "http://topika.ecs.eng.bne.redhat.com:8080/pressgang-ccms/rest/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + this.wordData.value +
+				var contentSpecRESTUrl = baseRESTUrl + "/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + this.wordData.value +
 					"?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22children_OTM%22%7D%7D%5D%7D%5D%7D%5D%7D";
 
 				$wnd.jQuery.ajax({
@@ -1343,7 +1329,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                         }(this.wordData));
                     }
                 } else if (this.wordData.type == 'tag' || this.wordData.type == 'spec') {
-                    if (tagDB != null) {
+                    if (xmlElementDB != null) {
 
 						var option = {};
 						var optionDetails = {};
@@ -1353,11 +1339,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 						callback([option]);
 
-                        var database = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getDatabase()();
+                        var database = xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::getDatabase()();
                         var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
                         if (topicId != null) {
                             processingSuggestions = true;
-                            var restServer = tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getRestEndpoint()();
+                            var restServer = xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::getRestEndpoint()();
 
                             // get the topic XML
                             var getTopicRestUrl = restServer + "/1/topic/get/json/" + topicId;
@@ -1730,9 +1716,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private native void enableSpecMatching() /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-		var tagDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagDB;
+		var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
 
-		if (tagDB != null) {
+		if (xmlElementDB != null) {
 			var currentlyMatchingSpecMetadata = false;
 			var specMetadataMarkersPresent = [];
 			var specMetadataContentsModified = true;
@@ -1786,7 +1772,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 
 			var matchSpecMetadata = function() {
-				if (!tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::isLoaded()()) {
+				if (!xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::isLoaded()()) {
 					console.log("Waiting for tag database to load.");
 					return;
 				}
@@ -1801,7 +1787,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 				if (!loaded) {
 					// Set the tag db
-					specMatchingWorker.postMessage({tagDB: tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getJSONDatabase()()});
+					specMatchingWorker.postMessage({tagDB: xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::getJSONDatabase()()});
 					loaded = true;
 				}
 
@@ -1826,9 +1812,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private native void enableTagMatching() /*-{
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-        var tagDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagDB;
+        var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
 
-        if (tagDB != null) {
+        if (xmlElementDB != null) {
             var currentlyMatchingTags = false;
             var tagMarkersPresent = [];
             var tagContentsModified = true;
@@ -1884,7 +1870,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
 
             var matchTags = function() {
-                if (!tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::isLoaded()()) {
+                if (!xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::isLoaded()()) {
                     console.log("Waiting for tag database to load.");
                     return;
                 }
@@ -1899,7 +1885,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 if (!loaded) {
                     // Set the tag db
-                    tagMatchingWorker.postMessage({tagDB: tagDB.@edu.ycp.cs.dh.acegwt.client.tagdb.TagDB::getJSONDatabase()()});
+                    tagMatchingWorker.postMessage({tagDB: xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::getJSONDatabase()()});
                     loaded = true;
                 }
 
