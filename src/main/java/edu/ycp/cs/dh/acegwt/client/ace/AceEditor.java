@@ -979,25 +979,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 	}-*/;
 
     private native void enableSnippets() /*-{
-
-		if ($wnd.require == undefined) {
-			$wnd.alert("window.require is undefined! Please make sure you have included the appropriate JavaScript files.");
-			return;
-		}
-
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 
 		if (editor != null) {
-            var snippetManager = $wnd.require("ace/snippets").snippetManager;
-
-            if (snippetManager != null) {
-                editor.commands.bindKey("Tab", function(editor) {
-                    var success = snippetManager.expandWithTab(editor);
-                    if (!success) {
-                        editor.execCommand("indent");
-                    }
-                });
-            }
+            $wnd.ace.require("ace/ext/language_tools");
+            editor.setOption("enableSnippets", true);
         } else {
 			console.log("editor == null. enableSnippets() was not called successfully.");
 		}
