@@ -1,3 +1,5 @@
 /AceGWT/war/WEB-INF/classes
 /.gwt-tmp
 /target
+.idea/
+*.iml
