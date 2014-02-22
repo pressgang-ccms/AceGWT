@@ -166,6 +166,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private boolean enableSpecMatching = false;
     private boolean enableSpellChecking = true;
     private boolean enableConditionalChecking = true;
+    private boolean enableAutoComplete = false;
+    private boolean autoCompleteInitialised = false;
     /**
      * The current condition used to include or exclude xml elements
      */
@@ -187,6 +189,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * The conditional matching web worker
      */
     private JavaScriptObject conditionalMatchingWorker;
+
+    private JavaScriptObject liveAutoCompleteFunction;
 
     /**
      * This constructor will only work if the <code>.ace_editor</code> CSS class is set with
@@ -252,7 +256,66 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         }
 
         initWidget(html);
+        init();
     }
+
+    private native void init() /*-{
+        var util = $wnd.ace.require("ace/autocomplete/util");
+        var Autocomplete = $wnd.ace.require('ace/autocomplete').Autocomplete;
+
+        // See https://github.com/ajaxorg/ace/pull/1789
+        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction = function(e) {
+            var editor = e.editor;
+            var session = editor.getSession();
+            var pos = editor.getCursorPosition();
+            var line = session.getLine(pos.row);
+            var hasCompleter = (editor.completer && editor.completer.activated);
+
+            var text = e.args || "";
+
+            // Is the user entering text
+            // we only want to automatically show the autocomplete dialog
+            // whenever the user is typing in text not pasting, deleting, ...
+            var typing = (e.command.name === "insertstring" && text.length === 1);
+
+            // We don't want to autocomplete with no prefix
+            if(
+                e.command.name === 'backspace' &&
+                    util.retrievePrecedingIdentifier(line, pos.column) === ''
+                ) {
+                if(hasCompleter) editor.completer.detach();
+                return;
+            }
+
+            // we don't want to autocomplete on paste events
+            if(!typing) {
+                return;
+            }
+
+            // The prefix to autocomplete for
+            var prefix = util.retrievePrecedingIdentifier(line, pos.column);
+
+            // Only autocomplete if there's a prefix that can be matched
+            if(prefix.length >= 2 && !(hasCompleter)) {
+                if (!editor.completer) {
+                    // Create new autocompleter
+                    editor.completer = new Autocomplete();
+
+                    // Disable autoInsert
+                    editor.completer.autoInsert = false;
+                }
+
+                editor.completer.showPopup(editor);
+                // needed for firefox on mac
+                editor.completer.cancelContextMenu();
+
+            } else if(prefix === '' && hasCompleter) {
+                // When the prefix is empty
+                // close the autocomplete dialog
+                editor.completer.detach();
+            }
+        };
+    }-*/;
 
     /**
      * Does nothing - left for compatibility
@@ -289,6 +352,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         var showGutter = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::showGutter;
         var enableSpellChecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellChecking;
         var enableConditionalChecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableConditionalChecking;
+        var enableAutoComplete = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableAutoComplete;
 
 		if ($wnd.ace == undefined) {
 			$wnd.alert("window.ace is undefined! Please make sure you have included the appropriate JavaScript files.");
@@ -354,6 +418,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             editor.getSession().setUseWrapMode(true);
         }
 
+        console.log("\t\tSetting Auto Completion");
+        if (enableAutoComplete) {
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setAutoCompleteEnabledNative(Z)(enableAutoComplete);
+        }
+
         // Set wrapping.
         console.log("\t\tSetting Behaviours");
         editor.setBehavioursEnabled(enableBehaviours);
@@ -388,6 +457,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellCheckingEnabledNative()();
         }
 
+        console.log("\t\tEnabling Conditional Checking");
         if (enableConditionalChecking) {
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableConditionalMatchingNative()();
         }
@@ -531,6 +601,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				specMatchingWorker.terminate();
 				this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker = null;
 			}
+
+            // Disable auto complete
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setAutoCompleteEnabledNative(Z)(false);
+            if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction != null) {
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction = null;
+            }
 
             if (editor != null) {
 
@@ -953,6 +1029,52 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         setBehavioursEnabledNative(enableBehaviours);
     }
 
+    public void setAutoCompleteEnabled(final boolean enableAutoComplete) {
+        if (this.enableAutoComplete != enableAutoComplete) {
+            this.enableAutoComplete = enableAutoComplete;
+            setAutoCompleteEnabledNative(enableAutoComplete);
+        }
+    }
+
+    public boolean getAutoCompleteEnabled() {
+        return this.enableAutoComplete;
+    }
+
+    private native void setAutoCompleteEnabledNative(final boolean enableAutoComplete) /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+
+        if (editor != null) {
+            $wnd.ace.require("ace/ext/language_tools");
+            editor.setOption("enableBasicAutocompletion", enableAutoComplete);
+
+            if (enableAutoComplete && !this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::autoCompleteInitialised) {
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::autoCompleteInitialised = true;
+                var Autocomplete = $wnd.ace.require('ace/autocomplete').Autocomplete;
+
+                // Turn off auto insert
+                if (!editor.completer) {
+                    editor.completer = new Autocomplete();
+                }
+                editor.completer.autoInsert = false;
+
+                // Remove the text completer ans swap the order so snippets are suggested later
+                editor.completers.splice(1, 1);
+                editor.completers.reverse();
+
+                var liveAutoComplete = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction;
+                editor.commands.on("afterExec", liveAutoComplete);
+            } else if (enableAutoComplete) {
+                var liveAutoComplete = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction;
+                editor.commands.on("afterExec", liveAutoComplete);
+            } else if (!enableAutoComplete) {
+                var liveAutoComplete = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction;
+                editor.commands.removeListener("afterExec", liveAutoComplete);
+            }
+        } else {
+            console.log("editor == null. setAutoCompleteEnabled() was not called successfully.");
+        }
+    }-*/;
+
     public boolean getUserWrapMode() {
         return this.useWrap;
     }
@@ -995,12 +1117,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * @param lineNumbers An array containing the line numbers to add the style to
      * @param style The style to clear and then add
      */
-    public native void clearAndAddGutterDecoration(final int[] lineNumbers, final String style) /*-{
-
-
-		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::clearGutterDecoration(Ljava/lang/String;)(style);
-		this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::addGutterDecoration([ILjava/lang/String;)(lineNumbers, style);
-    }-*/;
+    public void clearAndAddGutterDecoration(final int[] lineNumbers, final String style) {
+        clearGutterDecoration(style);
+        addGutterDecoration(lineNumbers, style);
+    };
 
     public native void clearGutterDecoration(final String style) /*-{
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;

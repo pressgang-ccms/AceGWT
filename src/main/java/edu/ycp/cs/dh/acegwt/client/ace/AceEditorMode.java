@@ -44,6 +44,8 @@ public enum AceEditorMode {
 	CSS("css"),
 	/** Diff. */
 	DIFF("diff"),
+    /** XML. */
+    DOCBOOK("docbook"),
 	/** Go (http://golang.org/). */
 	GOLANG("golang"),
 	/** Groovy. */
