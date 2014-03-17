@@ -1540,11 +1540,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                         wordData['end'] = matches[4];
                                     } else {
                                         if (classAttribute.indexOf("ace_numeric") != -1) {
-											retValue = true;
+                                            var text = $wnd.jQuery(this).text();
+                                            if (/\d+/.test(text)) {
+                                                retValue = true;
 
-                                            wordData['type'] = 'numeric';
-                                            wordData['value'] = $wnd.jQuery(this).text();
-
+                                                wordData['type'] = 'numeric';
+                                                wordData['value'] = text;
+                                            }
                                         }
                                     }
                                 }
