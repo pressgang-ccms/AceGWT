@@ -607,7 +607,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction != null) {
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction = null;
             }
-            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::autoCompleteInitialised = false;
 
             if (editor != null) {
 
