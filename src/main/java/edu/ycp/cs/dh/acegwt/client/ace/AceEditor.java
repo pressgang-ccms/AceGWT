@@ -256,10 +256,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         }
 
         initWidget(html);
-        init();
     }
 
-    private native void init() /*-{
+    private native void initFunctions() /*-{
         var util = $wnd.ace.require("ace/autocomplete/util");
         var Autocomplete = $wnd.ace.require('ace/autocomplete').Autocomplete;
 
@@ -522,6 +521,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     {
         logger.log(Level.INFO, "ENTER AceEditor.onLoad()");
         super.onLoad();
+        initFunctions();
         startEditorNative();
         logger.log(Level.INFO, "EXIT AceEditor.onLoad()");
     }
@@ -607,6 +607,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction != null) {
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction = null;
             }
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::autoCompleteInitialised = false;
 
             if (editor != null) {
 
@@ -687,6 +688,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     public void setMode(final AceEditorMode mode) {
         this.mode = mode;
         setModeByName(mode.getName());
+    }
+
+    public AceEditorMode getMode() {
+        return mode;
     }
 
     /**
@@ -1057,7 +1062,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 }
                 editor.completer.autoInsert = false;
 
-                // Remove the text completer ans swap the order so snippets are suggested later
+                // Remove the text completer and swap the order so snippets are suggested later
                 editor.completers.splice(1, 1);
                 editor.completers.reverse();
 
