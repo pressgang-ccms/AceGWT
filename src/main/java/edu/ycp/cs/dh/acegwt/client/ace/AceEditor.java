@@ -278,7 +278,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var typing = (e.command.name === "insertstring" && text.length === 1);
 
             // We don't want to autocomplete with no prefix
-            if(
+            if (
                 e.command.name === 'backspace' &&
                     util.retrievePrecedingIdentifier(line, pos.column) === ''
                 ) {
@@ -292,10 +292,11 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             }
 
             // The prefix to autocomplete for
-            var prefix = util.retrievePrecedingIdentifier(line, pos.column);
+            var prefixRegex = /[\w\[\$-]/;
+            var prefix = util.retrievePrecedingIdentifier(line, pos.column, prefixRegex);
 
             // Only autocomplete if there's a prefix that can be matched
-            if(prefix.length >= 2 && !(hasCompleter)) {
+            if (prefix.length >= 2 && !(hasCompleter)) {
                 if (!editor.completer) {
                     // Create new autocompleter
                     editor.completer = new Autocomplete();
@@ -308,7 +309,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 // needed for firefox on mac
                 editor.completer.cancelContextMenu();
 
-            } else if(prefix === '' && hasCompleter) {
+            } else if (prefix === '' && hasCompleter) {
                 // When the prefix is empty
                 // close the autocomplete dialog
                 editor.completer.detach();
