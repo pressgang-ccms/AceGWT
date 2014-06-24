@@ -1178,6 +1178,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private native void setupContextMenu() /*-{
 
+        var event = $wnd.ace.require("ace/lib/event");
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
         var positiveDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary;
         var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
@@ -1205,32 +1206,37 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             return output;
         }
 
-        // This stops two context menus from being displayed
-        var processingSuggestions = false;
+        var loadSuggestions = function(cmenu, theme, callback) {
+            // Display an initial loading menu item
+            var option = {};
+            var optionDetails = {};
+            optionDetails["onclick"] = function(menuItem,menu){};
+            optionDetails["disabled"] = true;
+            option["Loading. This can take a few seconds..."] = optionDetails;
 
-        $wnd.jQuery('#' + this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId).contextMenu(function(cmenu,t,callback) {
+            callback([option]);
 
-			if (this.wordData.type == 'numeric') {
+            // Get a reference of the target so we can check if it's changed later, as we don't want to display two menus
+            var callbackWrapper = function(target) {
+                return function(options) {
+                    // Check to make sure the context menu hasn't been switched to another target
+                    if (cmenu.target === target && cmenu.shown) {
+                        cmenu.hide();
+                        callback(options);
+                    }
+                }
+            }(cmenu.target);
 
-				// Display an initial loading menu item
-                var option = {};
-				var optionDetails = {};
-				optionDetails["onclick"] = function(menuItem,menu){};
-				optionDetails["disabled"] = true;
-				option["Loading. This can take a few seconds..."] = optionDetails;
-
-				callback([option]);
-
+            if (this.wordData.type == 'numeric') {
                 // Start loading the data for the real menu items
                 var callBackOptions = [];
                 var specCallbackOption = []
                 var topicDetailsCallbackFinished = false;
-				var specDetailsCallbackFinished = false;
+                var specDetailsCallbackFinished = false;
 
-                doCallback = function() {
-					if (topicDetailsCallbackFinished && specDetailsCallbackFinished) {
-						cmenu.hide();
-                        callback(callBackOptions.concat(specCallbackOption));
+                var doCallback = function() {
+                    if (topicDetailsCallbackFinished && specDetailsCallbackFinished) {
+                        callbackWrapper(callBackOptions.concat(specCallbackOption));
                     }
                 }
 
@@ -1238,30 +1244,31 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 var getTopicRestUrl = baseRESTUrl + "/1/topic/get/json/" + this.wordData.value + "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22sourceUrls_OTM%22%7D%7D%2C%20%7B%22trunk%22%3A%7B%22name%22%3A%20%22revisions%22%2C%20%22start%22%3A0%2C%20%22end%22%3A5%7D%2C%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22logDetails%22%7D%7D%5D%7D%5D%7D";
 
-				$wnd.jQuery.ajax({
-					dataType: "json",
-					url: getTopicRestUrl,
-					error: function(wordData) {
-						return function() {
-							console.log("Could not find topic with ID " + wordData.value);
-							topicDetailsCallbackFinished = true;
-							doCallback();
-						}
-					}(this.wordData),
-					success: function(wordData) {
-						return function(topicData) {
-							console.log("Found topic with ID " + wordData.value);
+                $wnd.jQuery.ajax({
+                    dataType: "json",
+                    url: getTopicRestUrl,
+                    error: function(wordData) {
+                        return function() {
+                            console.log("Could not find topic with ID " + wordData.value);
+                            topicDetailsCallbackFinished = true;
+                            doCallback();
+                        }
+                    }(this.wordData),
+                    success: function(wordData) {
+                        return function(topicData) {
+                            console.log("Found topic with ID " + wordData.value);
 
-							// Add an option to open the topic in a new window
-							var editOption = {};
-							var editOptionDetails = {};
-							editOptionDetails["onclick"] = function(menuItem,menu){
-								$wnd.open("#SearchResultsAndTopicView;query;topicIds=" + wordData.value);
-							}
-							editOption["Edit topic " + wordData.value] = editOptionDetails;
+                            // Add an option to open the topic in a new window
+                            var editOption = {};
+                            var editOptionDetails = {};
+                            editOptionDetails["onclick"] = function(menuItem, menu) {
+                                cmenu.hide();
+                                $wnd.open("#SearchResultsAndTopicView;query;topicIds=" + wordData.value);
+                            }
+                            editOption["Edit topic " + wordData.value] = editOptionDetails;
 
                             callBackOptions.push(editOption);
-							callBackOptions.push($wnd.jQuery.contextMenu.separator);
+                            callBackOptions.push($wnd.jQuery.contextMenu.separator);
 
                             // Add a list of the last 5 revisions
                             for (var revisionIndex = 0, revisionCount = topicData.revisions.items.length; revisionIndex < revisionCount; ++revisionIndex) {
@@ -1270,141 +1277,128 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 // truncate long revision messages
                                 var message = revision.logDetails.message ? revision.logDetails.message : "";
                                 if (message.length > 100) {
-									message = message.substr(0, 97) + "...";
+                                    message = message.substr(0, 97) + "...";
                                 }
 
-								var revisionOption = {};
-								var revisionOptionDetails = {};
-								revisionOptionDetails["onclick"] = function(menuItem,menu){
-									// See TopicFilteredResultsAndDetailsPresenter.parseToken() for the format of this url
+                                var revisionOption = {};
+                                var revisionOptionDetails = {};
+                                revisionOptionDetails["onclick"] = function(menuItem, menu) {
+                                    cmenu.hide();
+                                    // See TopicFilteredResultsAndDetailsPresenter.parseToken() for the format of this url
                                     $wnd.open("#SearchResultsAndTopicView;topicViewData;" + wordData.value + "=r:" + revision.revision + ";query;topicIds=" + wordData.value);
-								}
-								revisionOption[revision.revision + " " + $wnd.moment(revision.lastModified).format("DD MMM YY HH:mm") + " " + message] = revisionOptionDetails;
-								callBackOptions.push(revisionOption);
+                                }
+                                revisionOption[revision.revision + " " + $wnd.moment(revision.lastModified).format("DD MMM YY HH:mm") + " " + message] = revisionOptionDetails;
+                                callBackOptions.push(revisionOption);
                             }
 
                             // Add a list of the source urls
 
-							callBackOptions.push($wnd.jQuery.contextMenu.separator);
+                            callBackOptions.push($wnd.jQuery.contextMenu.separator);
 
-							for (var urlIndex = 0, urlCount = topicData.sourceUrls_OTM.items.length; urlIndex < urlCount; ++urlIndex) {
-								var url = topicData.sourceUrls_OTM.items[urlIndex].item;
+                            for (var urlIndex = 0, urlCount = topicData.sourceUrls_OTM.items.length; urlIndex < urlCount; ++urlIndex) {
+                                var url = topicData.sourceUrls_OTM.items[urlIndex].item;
 
-								// truncate long revision messages
-								var title = url.title ? url.title : url.url;
-								if (title.length > 100) {
-									title = title.substr(0, 97) + "...";
-								}
+                                // truncate long revision messages
+                                var title = url.title ? url.title : url.url;
+                                if (title.length > 100) {
+                                    title = title.substr(0, 97) + "...";
+                                }
 
-								var urlOption = {};
-								var urlOptionDetails = {};
-								urlOptionDetails["onclick"] = function(menuItem,menu){
-									$wnd.open(url.url);
-								}
-								urlOption[title] = urlOptionDetails;
-								callBackOptions.push(urlOption);
-							}
+                                var urlOption = {};
+                                var urlOptionDetails = {};
+                                urlOptionDetails["onclick"] = function(menuItem, menu) {
+                                    cmenu.hide();
+                                    $wnd.open(url.url);
+                                }
+                                urlOption[title] = urlOptionDetails;
+                                callBackOptions.push(urlOption);
+                            }
 
                             // Now find all the specs that this topic belongs to
 
-							callBackOptions.push($wnd.jQuery.contextMenu.separator);
+                            callBackOptions.push($wnd.jQuery.contextMenu.separator);
 
-							topicDetailsCallbackFinished = true;
-							doCallback();
-						}
-					}(this.wordData)
-				});
+                            topicDetailsCallbackFinished = true;
+                            doCallback();
+                        }
+                    }(this.wordData)
+                });
 
-				var contentSpecRESTUrl = baseRESTUrl + "/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + this.wordData.value +
-					"?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22children_OTM%22%7D%7D%5D%7D%5D%7D%5D%7D";
+                var contentSpecRESTUrl = baseRESTUrl + "/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + this.wordData.value +
+                    "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22children_OTM%22%7D%7D%5D%7D%5D%7D%5D%7D";
 
-				$wnd.jQuery.ajax({
-					dataType: "json",
-					url: contentSpecRESTUrl,
-					error: function() {
-						console.log("Could not find csNodes that relate to the topic");
-						specDetailsCallbackFinished = true;
-						doCallback();
-					},
-					success: function(csNodeData) {
+                $wnd.jQuery.ajax({
+                    dataType: "json",
+                    url: contentSpecRESTUrl,
+                    error: function() {
+                        console.log("Could not find csNodes that relate to the topic");
+                        specDetailsCallbackFinished = true;
+                        doCallback();
+                    },
+                    success: function(csNodeData) {
 
-						console.log("Found CSNodes");
+                        console.log("Found CSNodes");
 
-						csNodeData.items.sort(function(a,b){
-							return a.item.contentSpec.id - b.item.contentSpec.id;
-						});
+                        csNodeData.items.sort(function(a,b){
+                            return a.item.contentSpec.id - b.item.contentSpec.id;
+                        });
 
-						var foundSpecs = {};
-						for (var i = 0, count = csNodeData.items.length; i < count; ++i) {
-							var csNode = csNodeData.items[i].item;
-							var specId = csNode.contentSpec.id;
+                        var foundSpecs = {};
+                        for (var i = 0, count = csNodeData.items.length; i < count; ++i) {
+                            var csNode = csNodeData.items[i].item;
+                            var specId = csNode.contentSpec.id;
 
-							if (!foundSpecs[specId]) {
-								foundSpecs[specId] = 1;
-							} else {
-								foundSpecs[specId] += 1;
-							}
+                            if (!foundSpecs[specId]) {
+                                foundSpecs[specId] = 1;
+                            } else {
+                                foundSpecs[specId] += 1;
+                            }
 
-							if (foundSpecs[specId] == 1) {
-								var editSpecOption = {};
-								var editSpecOptionDetails = {};
-								editSpecOptionDetails["onclick"] = function(specId) {
-									return function(menuItem,menu){
-										$wnd.open("#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
-									};
-								}(specId);
+                            if (foundSpecs[specId] == 1) {
+                                var editSpecOption = {};
+                                var editSpecOptionDetails = {};
+                                editSpecOptionDetails["onclick"] = function(specId) {
+                                    return function(menuItem, menu) {
+                                        cmenu.hide();
+                                        $wnd.open("#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
+                                    };
+                                }(specId);
 
-								var title = "Edit spec " + specId;
+                                var title = "Edit spec " + specId;
 
-								if (csNode.contentSpec && csNode.contentSpec.children_OTM) {
-									for (var childIndex = 0, childCount = csNode.contentSpec.children_OTM.items.length; childIndex < childCount; ++childIndex) {
-										var childNode = csNode.contentSpec.children_OTM.items[childIndex].item;
-										if (childNode.title == "Title") {
-											title += " " + childNode.additionalText;
-											break;
-										}
-									}
-								}
+                                if (csNode.contentSpec && csNode.contentSpec.children_OTM) {
+                                    for (var childIndex = 0, childCount = csNode.contentSpec.children_OTM.items.length; childIndex < childCount; ++childIndex) {
+                                        var childNode = csNode.contentSpec.children_OTM.items[childIndex].item;
+                                        if (childNode.title == "Title") {
+                                            title += " " + childNode.additionalText;
+                                            break;
+                                        }
+                                    }
+                                }
 
-								if (csNode.entityRevision) {
-									title += " (Topic fixed at revision " + csNode.entityRevision + ")";
-								}
+                                if (csNode.entityRevision) {
+                                    title += " (Topic fixed at revision " + csNode.entityRevision + ")";
+                                }
 
-								editSpecOption[title] = editSpecOptionDetails;
+                                editSpecOption[title] = editSpecOptionDetails;
 
-								specCallbackOption.push(editSpecOption);
-							}
-						}
+                                specCallbackOption.push(editSpecOption);
+                            }
+                        }
 
-						specDetailsCallbackFinished = true;
-						doCallback();
-					}
-				});
-			} else {
-
+                        specDetailsCallbackFinished = true;
+                        doCallback();
+                    }
+                });
+            } else {
                 var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
 
                 if (this.wordData.type == 'spelling') {
                     if (positiveDictionary != null) {
-
-						// Display an initial loading menu item
-						var option = {};
-						var optionDetails = {};
-						optionDetails["onclick"] = function(menuItem,menu){};
-						optionDetails["disabled"] = true;
-						option["Loading. This can take a few seconds..."] = optionDetails;
-						callback([option]);
-
                         var retValue = [];
-
-                        // Populate the context menu for the spelling options
-
-                        processingSuggestions = true;
 
                         positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().suggest(word, 5, function(wordData) {
                             return function(suggestions) {
-                                processingSuggestions = false;
-
                                 if (suggestions.length == 0) {
                                     var option = {};
                                     option["No Suggestions"]=function(menuItem,menu){};
@@ -1433,27 +1427,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     }
                                 }
 
-                                cmenu.hide();
-                                callback(retValue);
-
+                                callbackWrapper(retValue);
                             };
                         }(this.wordData));
                     }
                 } else if (this.wordData.type == 'tag' || this.wordData.type == 'spec') {
                     if (xmlElementDB != null) {
-
-						var option = {};
-						var optionDetails = {};
-						optionDetails["onclick"] = function(menuItem,menu){};
-						optionDetails["disabled"] = true;
-						option["Loading. This can take a few seconds..."] = optionDetails;
-
-						callback([option]);
-
                         var database = xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::getDatabase()();
                         var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
                         if (topicId != null) {
-                            processingSuggestions = true;
                             var restServer = xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::getRestEndpoint()();
 
                             // get the topic XML
@@ -1461,7 +1443,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                             $wnd.jQuery.ajax({
                                 dataType: "json",
                                 url: getTopicRestUrl,
-                                error: function() {processingSuggestions = false;},
                                 success: function(topicData) {
                                     // hold the XML
                                     var holdXMLRestUrl = restServer + "/1/holdxml";
@@ -1471,12 +1452,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                         data: "<?xml-stylesheet type='text/xsl' href='/pressgang-ccms-static/publican-docbook/html-single-renderonly.xsl'?>" + topicData.xml,
                                         contentType: 'application/xml',
                                         dataType: 'json',
-                                        error: function() {processingSuggestions = false;},
-                                        success: function(holdxmlData) {
-                                            processingSuggestions = false;
-
+                                        success: function(holdXMLData) {
                                             // echo the XML into an iframe
-                                            var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdxmlData.value;
+                                            var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdXMLData.value;
                                             var option = {};
                                             var optionDetails = {};
                                             optionDetails["onclick"] = function(menuItem,menu){};
@@ -1495,8 +1473,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                             };
                                             editOption["Edit this topic"] = editOptionDetails;
 
-											cmenu.hide();
-                                            callback([option, editOption]);
+                                            callbackWrapper([option, editOption]);
                                         }
                                     });
                                 }
@@ -1505,66 +1482,70 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     }
                 }
             }
-        }, {theme:'osx', beforeShow: function(event) {
-            if (!processingSuggestions) {
-                var retValue = false;
+        };
 
-                this.wordData = {};
+        // Create the context menu object
+        var cmenu = $wnd.jQuery.contextMenu.create(loadSuggestions, {theme:'osx'});
 
-                // the divs with the classes misspeled, badword and tagmatch are all highlights added above words by the
-                // various workers created to scan the text and look for certain elements.
-                // the span with the class ace_numeric is part of the theme.
+        // Bind the context menu event, so we can intercept it on markers
+        editor.on("nativecontextmenu", function(e) {
+            // Find the markers and see if we clicked one
+            $wnd.jQuery("div[class^='misspelled'], div[class^='badword'], div[class^='tagmatch'], div[class^='specmatch'], span[class*='ace_numeric']").each(
+                function() {
+                    var jQueryEle = $wnd.jQuery(this);
+                    var element = jQueryEle[0];
+                    if (jQueryEle.offset().left <= e.domEvent.clientX &&
+                        jQueryEle.offset().left + jQueryEle.width() >= e.domEvent.clientX &&
+                        jQueryEle.offset().top <= e.domEvent.clientY &&
+                        jQueryEle.offset().top + jQueryEle.height() >= e.domEvent.clientY) {
 
-                $wnd.jQuery("div[class^='misspelled'], div[class^='badword'], div[class^='tagmatch'], div[class^='specmatch'], span[class*='ace_numeric']").each(
-                    function(wordData){
-                        return function(){
-                            if ($wnd.jQuery(this).offset().left <= event.clientX &&
-                                $wnd.jQuery(this).offset().left + $wnd.jQuery(this).width() >= event.clientX &&
-                                $wnd.jQuery(this).offset().top <= event.clientY &&
-                                $wnd.jQuery(this).offset().top + $wnd.jQuery(this).height() >= event.clientY) {
+                        var classAttribute = jQueryEle.attr('class');
+                        if (classAttribute != null) {
+                            cmenu.wordData = {};
 
-                                var classAttribute = $wnd.jQuery(this).attr('class');
-
-                                if (classAttribute != null) {
-
-                                    var matches = /(misspelled|badword|tagmatch|specmatch)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
-                                    if (matches != null && matches.length >= 5) {
-
-                                        retValue = true;
-
-                                        if (matches[1] == 'tagmatch') {
-											wordData['type'] = 'tag';
-                                        } else if (matches[1] == 'specmatch') {
-											wordData['type'] = 'spec';
-										} else  {
-											wordData['type'] = 'spelling';
-										}
-
-                                        wordData['line'] = matches[2];
-                                        wordData['start'] = matches[3];
-                                        wordData['end'] = matches[4];
-                                    } else {
-                                        if (classAttribute.indexOf("ace_numeric") != -1) {
-                                            var text = $wnd.jQuery(this).text();
-                                            if (/\d+/.test(text)) {
-                                                retValue = true;
-
-                                                wordData['type'] = 'numeric';
-                                                wordData['value'] = text;
-                                            }
-                                        }
-                                    }
+                            var matches = /(misspelled|badword|tagmatch|specmatch)-(\d+)-(\d+)-(\d+)/.exec(classAttribute);
+                            if (matches != null && matches.length >= 5) {
+                                if (matches[1] == 'tagmatch') {
+                                    cmenu.wordData['type'] = 'tag';
+                                } else if (matches[1] == 'specmatch') {
+                                    cmenu.wordData['type'] = 'spec';
+                                } else  {
+                                    cmenu.wordData['type'] = 'spelling';
                                 }
 
-                            }
-                        };
-                    }(this.wordData));
+                                cmenu.wordData['line'] = matches[2];
+                                cmenu.wordData['start'] = matches[3];
+                                cmenu.wordData['end'] = matches[4];
 
-                return retValue;
-            } else {
-                return false;
-            }
-        }});
+                                // Stop the native context menu from loading
+                                event.stopEvent(e.domEvent);
+
+                                // Load the suggestions
+                                if (!(cmenu.shown && cmenu.target === element)) {
+                                    cmenu.show(element, e.domEvent);
+                                }
+                            } else if (classAttribute.indexOf("ace_numeric") != -1) {
+                                var text = $wnd.jQuery(this).text();
+                                if (/\d+/.test(text)) {
+                                    cmenu.wordData['type'] = 'numeric';
+                                    cmenu.wordData['value'] = text;
+
+                                    // Stop the native context menu from loading
+                                    event.stopEvent(e.domEvent);
+
+                                    // Load the suggestions
+                                    if (!(cmenu.shown && cmenu.target === element)) {
+                                        cmenu.show(element, e.domEvent);
+                                    }
+                                }
+                            }
+                        }
+
+                        return false;
+                    }
+                }
+            );
+        });
     }-*/;
 
     private native void enableConditionalMatchingNative() /*-{

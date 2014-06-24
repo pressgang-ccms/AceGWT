@@ -12,7 +12,7 @@
     <groupId>org.jboss.pressgang.ccms</groupId>
     <artifactId>acegwt-client</artifactId>
     <packaging>jar</packaging>
-    <version>1.6-SNAPSHOT</version>
+    <version>1.8-SNAPSHOT</version>
     <name>acegwt-client</name>
     <description>GWT ACE Client</description>
 
