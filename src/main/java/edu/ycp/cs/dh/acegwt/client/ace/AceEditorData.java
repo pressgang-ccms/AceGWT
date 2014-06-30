@@ -1,13 +1,11 @@
 package edu.ycp.cs.dh.acegwt.client.ace;
 
 import edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB;
-import edu.ycp.cs.dh.acegwt.client.typo.TypoJS;
 
 public class AceEditorData {
     private String restUrl;
-    private TypoJS positiveDictionary;
-    private TypoJS negativeDictionary;
-    private TypoJS negativePhraseDictionary;
+    private String typoJsBaseUrl;
+    private String typeJsLang;
     private XMLElementDB XMLElementDB;
 
     public String getRestUrl() {
@@ -18,28 +16,12 @@ public class AceEditorData {
         this.restUrl = restUrl;
     }
 
-    public TypoJS getPositiveDictionary() {
-        return positiveDictionary;
+    public String getTypoJsBaseUrl() {
+        return typoJsBaseUrl;
     }
 
-    public void setPositiveDictionary(TypoJS positiveDictionary) {
-        this.positiveDictionary = positiveDictionary;
-    }
-
-    public TypoJS getNegativeDictionary() {
-        return negativeDictionary;
-    }
-
-    public void setNegativeDictionary(TypoJS negativeDictionary) {
-        this.negativeDictionary = negativeDictionary;
-    }
-
-    public TypoJS getNegativePhraseDictionary() {
-        return negativePhraseDictionary;
-    }
-
-    public void setNegativePhraseDictionary(TypoJS negativePhraseDictionary) {
-        this.negativePhraseDictionary = negativePhraseDictionary;
+    public void setTypoJsBaseUrl(String typoJsBaseUrl) {
+        this.typoJsBaseUrl = typoJsBaseUrl;
     }
 
     public XMLElementDB getXMLElementDB() {
@@ -48,5 +30,13 @@ public class AceEditorData {
 
     public void setXMLElementDB(XMLElementDB XMLElementDB) {
         this.XMLElementDB = XMLElementDB;
+    }
+
+    public String getTypeJsLang() {
+        return typeJsLang;
+    }
+
+    public void setTypeJsLang(String typeJsLang) {
+        this.typeJsLang = typeJsLang;
     }
 }

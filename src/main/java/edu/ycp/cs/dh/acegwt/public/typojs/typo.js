@@ -88,7 +88,7 @@ var Typo = function (dictionary, affData, wordsData, settings) {
 		// Get rid of any codes from the compound rule codes that are never used 
 		// (or that were special regex characters).  Not especially necessary... 
 		for (var i in this.compoundRuleCodes) {
-			if (this.compoundRuleCodes[i].length == 0) {
+			if (this.compoundRuleCodes[i].length === 0) {
 				delete this.compoundRuleCodes[i];
 			}
 		}
@@ -388,8 +388,6 @@ Typo.prototype = {
 		// Remove comments
 		data = data.replace(/^\t.*$/mg, "");
 
-		return data;
-
 		// Trim each line
 		data = data.replace(/^\s\s*/m, '').replace(/\s\s*$/m, '');
 
@@ -419,7 +417,7 @@ Typo.prototype = {
 			return flags;
 		}
 		else if (this.flags.FLAG === "num") {
-			return textCode.split(",");
+			return textCodes.split(",");
 		}
 	},
 
@@ -596,13 +594,11 @@ Typo.prototype = {
 
 	alphabet : "",
 
-	suggest : function (word, limit, callback) {
+    // Speed improvements applied from https://github.com/cfinke/Typo.js/pull/28/
+	suggest : function (word, limit) {
 		if (!limit) limit = 5;
 
-		if (this.check(word)) {
-			callback([]);
-			return;
-		}
+        if (this.check(word)) return [];
 
 		// Check the replacement table.
 		for (var i = 0, _len = this.replacementTable.length; i < _len; i++) {
@@ -618,7 +614,8 @@ Typo.prototype = {
 			}
 		}
 
-		var self = this;
+        var self = this;
+        self.alphabet = "abcdefghijklmnopqrstuvwxyz";
 
 		/*
 		 if (!self.alphabet) {
@@ -641,110 +638,101 @@ Typo.prototype = {
 		 }
 		 */
 
-		function edits1(words, callback) {
-			var numWorkers = 4;
+        function edits1(words) {
+            var rv = [];
 
-			var rv = [];
+            for (var ii = 0, _iilen = words.length; ii < _iilen; ii++) {
+                var word = words[ii];
 
-			var workers = [];
-			var workersCompleted = [];
+                for (var i = 0, _len = word.length + 1; i < _len; i++) {
+                    var s = [ word.substring(0, i), word.substring(i) ];
 
-			var processNext = function() {
-				for (var i = 0; i < numWorkers; ++i) {
-					if (!workersCompleted[i]) {
-						return;
-					}
-				}
-				callback(rv);
-			}
+                    if (s[1]) {
+                        rv.push(s[0] + s[1].substring(1));
+                    }
 
-			for (var i = 0; i < numWorkers; ++i) {
-				var worker = new Worker("javascript/typojs/wordprocessor.js");
-				worker.addEventListener('message', function(index) {
-					return function(e) {
-						rv = rv.concat(e.data);
-						workersCompleted[index] = true;
-						processNext();
-					};
-				}(i));
+                    // eliminate transpositions of identical letters
+                    if (s[1].length > 1 && s[1][1] !== s[1][0]) {
+                        rv.push(s[0] + s[1][1] + s[1][0] + s[1].substring(2));
+                    }
 
-				workers.push(worker);
-				workersCompleted.push(false);
-			}
+                    if (s[1]) {
+                        for (var j = 0, _jlen = self.alphabet.length; j < _jlen; j++) {
+                            // eliminate replacement of a letter by itself
+                            if( self.alphabet[j] != s[1].substring(0,1) ){
+                                rv.push(s[0] + self.alphabet[j] + s[1].substring(1));
+                            }
+                        }
+                    }
 
-			var sliceSize = words.length / numWorkers;
-			for (var i = 0; i < numWorkers; ++i) {
-				if (i != numWorkers - 1) {
-					workers[i].postMessage(words.slice(sliceSize * i, sliceSize * (i+1)));
-				} else {
-					workers[i].postMessage(words.slice(sliceSize * i));
-				}
-			}
-		}
+                    if (s[1]) {
+                        for (var j = 0, _jlen = self.alphabet.length; j < _jlen; j++) {
+                            rv.push(s[0] + self.alphabet[j] + s[1]);
+                        }
+                    }
+                }
+            }
 
-		function known(words) {
-			var rv = [];
+            return rv;
+        }
 
-			for (var i = 0; i < words.length; i++) {
-				if (self.check(words[i])) {
-					rv.push(words[i]);
-				}
-			}
+        function known(words) {
+            var rv = [];
 
-			return rv;
-		}
+            for (var i = 0; i < words.length; i++) {
+                if (self.check(words[i])) {
+                    rv.push(words[i]);
+                }
+            }
 
-		function correct(word, callback) {
-			// Get the edit-distance-1 and edit-distance-2 forms of this word.
-			edits1([word], function(ed1) {
-				edits1(ed1,function(ed2) {
+            return rv;
+        }
 
-					var corrections = known(ed1).concat(known(ed2));
+        function correct(word) {
+            // Get the edit-distance-1 and edit-distance-2 forms of this word.
+            var ed1 = edits1([word]),
+                ed2 = edits1(ed1),
+                corrections = known(ed1.concat(ed2));
 
-					// Sort the edits based on how many different ways they were created.
-					var weighted_corrections = {};
+            // Sort the edits based on how many different ways they were created.
+            var weighted_corrections = {};
 
-					for (var i = 0, _len = corrections.length; i < _len; i++) {
-						if (!(corrections[i] in weighted_corrections)) {
-							weighted_corrections[corrections[i]] = 1;
-						}
-						else {
-							weighted_corrections[corrections[i]] += 1;
-						}
-					}
+            for (var i = 0, _len = corrections.length; i < _len; i++) {
+                if (!(corrections[i] in weighted_corrections)) {
+                    weighted_corrections[corrections[i]] = 1;
+                }
+                else {
+                    weighted_corrections[corrections[i]] += 1;
+                }
+            }
 
-					var sorted_corrections = [];
+            var sorted_corrections = [];
 
-					for (var i in weighted_corrections) {
-						sorted_corrections.push([ i, weighted_corrections[i] ]);
-					}
+            for (var i in weighted_corrections) {
+                sorted_corrections.push([ i, weighted_corrections[i] ]);
+            }
 
-					function sorter(a, b) {
-						if (a[1] < b[1]) {
-							return -1;
-						}
+            function sorter(a, b) {
+                if (a[1] < b[1]) {
+                    return -1;
+                }
 
-						return 1;
-					}
+                return 1;
+            }
 
-					sorted_corrections.sort(sorter).reverse();
+            sorted_corrections.sort(sorter).reverse();
 
-					var rv = [];
+            var rv = [];
 
-					for (var i = 0, _len = Math.min(limit, sorted_corrections.length); i < _len; i++) {
-						if (!self.hasFlag(sorted_corrections[i][0], "NOSUGGEST")) {
-							rv.push(sorted_corrections[i][0]);
-						}
-					}
+            for (var i = 0, _len = Math.min(limit, sorted_corrections.length); i < _len; i++) {
+                if (!self.hasFlag(sorted_corrections[i][0], "NOSUGGEST")) {
+                    rv.push(sorted_corrections[i][0]);
+                }
+            }
 
-					callback(rv);
-				});
-			});
+            return rv;
+        }
 
-		}
-
-		correct(word, function(rv) {
-			callback(rv);
-		});
-	}
+        return correct(word);
+    }
 };

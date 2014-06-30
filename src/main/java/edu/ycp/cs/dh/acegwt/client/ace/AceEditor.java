@@ -77,9 +77,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private final String elementId;
     private final String restUrl;
 
-    private final TypoJS positiveDictionary;
-    private final TypoJS negativeDictionary;
-    private final TypoJS negativePhraseDictionary;
+    private final String baseTypoJsUrl;
+    private final String typoJsLang;
     private final XMLElementDB xmlElementDB;
 
     private JavaScriptObject editor;
@@ -190,6 +189,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      */
     private JavaScriptObject conditionalMatchingWorker;
 
+    private JavaScriptObject contextMenu;
+
     private JavaScriptObject liveAutoCompleteFunction;
 
     /**
@@ -226,9 +227,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     public AceEditor(final boolean positionAbsolute, final AceEditorData data, final boolean enableTagMatching,
             final boolean enableSpecMatching) {
         restUrl = data == null ? null : data.getRestUrl();
-        positiveDictionary = data == null ? null : data.getPositiveDictionary();
-        negativeDictionary = data == null ? null : data.getNegativeDictionary();
-        negativePhraseDictionary = data == null ? null : data.getNegativePhraseDictionary();
+        baseTypoJsUrl = data == null ? null : data.getTypoJsBaseUrl();
+        typoJsLang = data == null ? null : data.getTypeJsLang();
         xmlElementDB = data == null ? null : data.getXMLElementDB();
         this.enableTagMatching = enableTagMatching;
         this.enableSpecMatching = enableSpecMatching;
@@ -479,12 +479,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         // to display properly and receive key/mouse events.
         // Try to force the editor to resize and display itself fully.  See:
         //    https://groups.google.com/group/ace-discuss/browse_thread/thread/237262b521dcea33
-        $wnd.setTimeout(function(){
-            return function(me) {
+        $wnd.setTimeout(function(editor) {
+            return function() {
                 console.log("\tForce resize and redisplay");
                 editor.resize();
-            } (this)
-        }, 0);
+            }
+        }(editor), 0);
 
 		console.log("EXIT AceEditor.startEditorNative()");
 
@@ -565,6 +565,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var conditionalMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::conditionalMatchingWorker;
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
             var specMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker;
+            var contextMenu = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu;
+            var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
 
             // clean up pending operations
             if (spellcheckInterval != null) {
@@ -602,6 +604,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				specMatchingWorker.terminate();
 				this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker = null;
 			}
+
+            if (contextMenu != null) {
+                contextMenu.wordData = null;
+                contextMenu.callbackWrapper = null;
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu = null;
+            }
+
+            if (xmlElementDB != null) {
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB = null;
+            }
 
             // Disable auto complete
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setAutoCompleteEnabledNative(Z)(false);
@@ -1180,10 +1192,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
         var event = $wnd.ace.require("ace/lib/event");
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
-        var positiveDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary;
         var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
         var readOnly = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::readOnly;
         var baseRESTUrl = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::restUrl;
+        var suggestionsInitiated = false;
 
         if (editor == null) {
             console.log("editor == null. setupContextMenu() was not called successfully.");
@@ -1206,286 +1218,303 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             return output;
         }
 
-        var loadSuggestions = function(cmenu, theme, callback) {
-            // Display an initial loading menu item
-            var option = {};
-            var optionDetails = {};
-            optionDetails["onclick"] = function(menuItem,menu){};
-            optionDetails["disabled"] = true;
-            option["Loading. This can take a few seconds..."] = optionDetails;
+        var loadSuggestions = function(me) {
+            return function(cmenu, theme, callback) {
+                // Display an initial loading menu item
+                var option = {};
+                var optionDetails = {};
+                optionDetails["onclick"] = function(menuItem,menu){};
+                optionDetails["disabled"] = true;
+                option["Loading. This can take a few seconds..."] = optionDetails;
 
-            callback([option]);
+                callback([option]);
 
-            // Get a reference of the target so we can check if it's changed later, as we don't want to display two menus
-            var callbackWrapper = function(target) {
-                return function(options) {
-                    // Check to make sure the context menu hasn't been switched to another target
-                    if (cmenu.target === target && cmenu.shown) {
-                        cmenu.hide();
-                        callback(options);
+                // Get a reference of the target so we can check if it's changed later, as we don't want to display two menus
+                this.callbackWrapper = function(target) {
+                    return function(options) {
+                        // Check to make sure the context menu hasn't been switched to another target
+                        if (cmenu.target === target && cmenu.shown) {
+                            cmenu.hide();
+                            callback(options);
+                        }
                     }
-                }
-            }(cmenu.target);
+                }(cmenu.target);
 
-            if (this.wordData.type == 'numeric') {
-                // Start loading the data for the real menu items
-                var callBackOptions = [];
-                var specCallbackOption = []
-                var topicDetailsCallbackFinished = false;
-                var specDetailsCallbackFinished = false;
+                if (this.wordData.type == 'numeric') {
+                    // Start loading the data for the real menu items
+                    var callBackOptions = [];
+                    var specCallbackOption = []
+                    var topicDetailsCallbackFinished = false;
+                    var specDetailsCallbackFinished = false;
 
-                var doCallback = function() {
-                    if (topicDetailsCallbackFinished && specDetailsCallbackFinished) {
-                        callbackWrapper(callBackOptions.concat(specCallbackOption));
-                    }
-                }
-
-                // find out if the number that was clicked on is a topic
-
-                var getTopicRestUrl = baseRESTUrl + "/1/topic/get/json/" + this.wordData.value + "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22sourceUrls_OTM%22%7D%7D%2C%20%7B%22trunk%22%3A%7B%22name%22%3A%20%22revisions%22%2C%20%22start%22%3A0%2C%20%22end%22%3A5%7D%2C%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22logDetails%22%7D%7D%5D%7D%5D%7D";
-
-                $wnd.jQuery.ajax({
-                    dataType: "json",
-                    url: getTopicRestUrl,
-                    error: function(wordData) {
+                    var doCallback = function(callback) {
                         return function() {
-                            console.log("Could not find topic with ID " + wordData.value);
-                            topicDetailsCallbackFinished = true;
-                            doCallback();
+                            if (topicDetailsCallbackFinished && specDetailsCallbackFinished) {
+                                callback(callBackOptions.concat(specCallbackOption));
+                            }
                         }
-                    }(this.wordData),
-                    success: function(wordData) {
-                        return function(topicData) {
-                            console.log("Found topic with ID " + wordData.value);
+                    }(this.callbackWrapper);
 
-                            // Add an option to open the topic in a new window
-                            var editOption = {};
-                            var editOptionDetails = {};
-                            editOptionDetails["onclick"] = function(menuItem, menu) {
-                                cmenu.hide();
-                                $wnd.open("#SearchResultsAndTopicView;query;topicIds=" + wordData.value);
+                    // find out if the number that was clicked on is a topic
+
+                    var getTopicRestUrl = baseRESTUrl + "/1/topic/get/json/" + this.wordData.value + "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22sourceUrls_OTM%22%7D%7D%2C%20%7B%22trunk%22%3A%7B%22name%22%3A%20%22revisions%22%2C%20%22start%22%3A0%2C%20%22end%22%3A5%7D%2C%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22logDetails%22%7D%7D%5D%7D%5D%7D";
+
+                    $wnd.jQuery.ajax({
+                        dataType: "json",
+                        url: getTopicRestUrl,
+                        error: function(wordData) {
+                            return function() {
+                                console.log("Could not find topic with ID " + wordData.value);
+                                topicDetailsCallbackFinished = true;
+                                doCallback();
                             }
-                            editOption["Edit topic " + wordData.value] = editOptionDetails;
+                        }(this.wordData),
+                        success: function(wordData) {
+                            return function(topicData) {
+                                console.log("Found topic with ID " + wordData.value);
 
-                            callBackOptions.push(editOption);
-                            callBackOptions.push($wnd.jQuery.contextMenu.separator);
-
-                            // Add a list of the last 5 revisions
-                            for (var revisionIndex = 0, revisionCount = topicData.revisions.items.length; revisionIndex < revisionCount; ++revisionIndex) {
-                                var revision = topicData.revisions.items[revisionIndex].item;
-
-                                // truncate long revision messages
-                                var message = revision.logDetails.message ? revision.logDetails.message : "";
-                                if (message.length > 100) {
-                                    message = message.substr(0, 97) + "...";
-                                }
-
-                                var revisionOption = {};
-                                var revisionOptionDetails = {};
-                                revisionOptionDetails["onclick"] = function(menuItem, menu) {
+                                // Add an option to open the topic in a new window
+                                var editOption = {};
+                                var editOptionDetails = {};
+                                editOptionDetails["onclick"] = function(menuItem, menu) {
                                     cmenu.hide();
-                                    // See TopicFilteredResultsAndDetailsPresenter.parseToken() for the format of this url
-                                    $wnd.open("#SearchResultsAndTopicView;topicViewData;" + wordData.value + "=r:" + revision.revision + ";query;topicIds=" + wordData.value);
+                                    $wnd.open("#SearchResultsAndTopicView;query;topicIds=" + wordData.value);
                                 }
-                                revisionOption[revision.revision + " " + $wnd.moment(revision.lastModified).format("DD MMM YY HH:mm") + " " + message] = revisionOptionDetails;
-                                callBackOptions.push(revisionOption);
-                            }
+                                editOption["Edit topic " + wordData.value] = editOptionDetails;
 
-                            // Add a list of the source urls
+                                callBackOptions.push(editOption);
+                                callBackOptions.push($wnd.jQuery.contextMenu.separator);
 
-                            callBackOptions.push($wnd.jQuery.contextMenu.separator);
+                                // Add a list of the last 5 revisions
+                                for (var revisionIndex = 0, revisionCount = topicData.revisions.items.length; revisionIndex < revisionCount; ++revisionIndex) {
+                                    var revision = topicData.revisions.items[revisionIndex].item;
 
-                            for (var urlIndex = 0, urlCount = topicData.sourceUrls_OTM.items.length; urlIndex < urlCount; ++urlIndex) {
-                                var url = topicData.sourceUrls_OTM.items[urlIndex].item;
+                                    // truncate long revision messages
+                                    var message = revision.logDetails.message ? revision.logDetails.message : "";
+                                    if (message.length > 100) {
+                                        message = message.substr(0, 97) + "...";
+                                    }
 
-                                // truncate long revision messages
-                                var title = url.title ? url.title : url.url;
-                                if (title.length > 100) {
-                                    title = title.substr(0, 97) + "...";
-                                }
-
-                                var urlOption = {};
-                                var urlOptionDetails = {};
-                                urlOptionDetails["onclick"] = function(menuItem, menu) {
-                                    cmenu.hide();
-                                    $wnd.open(url.url);
-                                }
-                                urlOption[title] = urlOptionDetails;
-                                callBackOptions.push(urlOption);
-                            }
-
-                            // Now find all the specs that this topic belongs to
-
-                            callBackOptions.push($wnd.jQuery.contextMenu.separator);
-
-                            topicDetailsCallbackFinished = true;
-                            doCallback();
-                        }
-                    }(this.wordData)
-                });
-
-                var contentSpecRESTUrl = baseRESTUrl + "/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + this.wordData.value +
-                    "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22children_OTM%22%7D%7D%5D%7D%5D%7D%5D%7D";
-
-                $wnd.jQuery.ajax({
-                    dataType: "json",
-                    url: contentSpecRESTUrl,
-                    error: function() {
-                        console.log("Could not find csNodes that relate to the topic");
-                        specDetailsCallbackFinished = true;
-                        doCallback();
-                    },
-                    success: function(csNodeData) {
-
-                        console.log("Found CSNodes");
-
-                        csNodeData.items.sort(function(a,b){
-                            return a.item.contentSpec.id - b.item.contentSpec.id;
-                        });
-
-                        var foundSpecs = {};
-                        for (var i = 0, count = csNodeData.items.length; i < count; ++i) {
-                            var csNode = csNodeData.items[i].item;
-                            var specId = csNode.contentSpec.id;
-
-                            if (!foundSpecs[specId]) {
-                                foundSpecs[specId] = 1;
-                            } else {
-                                foundSpecs[specId] += 1;
-                            }
-
-                            if (foundSpecs[specId] == 1) {
-                                var editSpecOption = {};
-                                var editSpecOptionDetails = {};
-                                editSpecOptionDetails["onclick"] = function(specId) {
-                                    return function(menuItem, menu) {
+                                    var revisionOption = {};
+                                    var revisionOptionDetails = {};
+                                    revisionOptionDetails["onclick"] = function(menuItem, menu) {
                                         cmenu.hide();
-                                        $wnd.open("#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
-                                    };
-                                }(specId);
-
-                                var title = "Edit spec " + specId;
-
-                                if (csNode.contentSpec && csNode.contentSpec.children_OTM) {
-                                    for (var childIndex = 0, childCount = csNode.contentSpec.children_OTM.items.length; childIndex < childCount; ++childIndex) {
-                                        var childNode = csNode.contentSpec.children_OTM.items[childIndex].item;
-                                        if (childNode.title == "Title") {
-                                            title += " " + childNode.additionalText;
-                                            break;
-                                        }
+                                        // See TopicFilteredResultsAndDetailsPresenter.parseToken() for the format of this url
+                                        $wnd.open("#SearchResultsAndTopicView;topicViewData;" + wordData.value + "=r:" + revision.revision + ";query;topicIds=" + wordData.value);
                                     }
+                                    revisionOption[revision.revision + " " + $wnd.moment(revision.lastModified).format("DD MMM YY HH:mm") + " " + message] = revisionOptionDetails;
+                                    callBackOptions.push(revisionOption);
                                 }
 
-                                if (csNode.entityRevision) {
-                                    title += " (Topic fixed at revision " + csNode.entityRevision + ")";
+                                // Add a list of the source urls
+
+                                callBackOptions.push($wnd.jQuery.contextMenu.separator);
+
+                                for (var urlIndex = 0, urlCount = topicData.sourceUrls_OTM.items.length; urlIndex < urlCount; ++urlIndex) {
+                                    var url = topicData.sourceUrls_OTM.items[urlIndex].item;
+
+                                    // truncate long revision messages
+                                    var title = url.title ? url.title : url.url;
+                                    if (title.length > 100) {
+                                        title = title.substr(0, 97) + "...";
+                                    }
+
+                                    var urlOption = {};
+                                    var urlOptionDetails = {};
+                                    urlOptionDetails["onclick"] = function(menuItem, menu) {
+                                        cmenu.hide();
+                                        $wnd.open(url.url);
+                                    }
+                                    urlOption[title] = urlOptionDetails;
+                                    callBackOptions.push(urlOption);
                                 }
 
-                                editSpecOption[title] = editSpecOptionDetails;
+                                // Now find all the specs that this topic belongs to
 
-                                specCallbackOption.push(editSpecOption);
+                                callBackOptions.push($wnd.jQuery.contextMenu.separator);
+
+                                topicDetailsCallbackFinished = true;
+                                doCallback();
                             }
-                        }
+                        }(this.wordData)
+                    });
 
-                        specDetailsCallbackFinished = true;
-                        doCallback();
-                    }
-                });
-            } else {
-                var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
+                    var contentSpecRESTUrl = baseRESTUrl + "/1/contentspecnodes/get/json/query;csNodeType=0%2C9%2C10;csNodeEntityId=" + this.wordData.value +
+                        "?expand=%7B%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22nodes%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22contentSpec%22%7D%2C%20%22branches%22%3A%5B%7B%22trunk%22%3A%7B%22name%22%3A%20%22children_OTM%22%7D%7D%5D%7D%5D%7D%5D%7D";
 
-                if (this.wordData.type == 'spelling') {
-                    if (positiveDictionary != null) {
-                        var retValue = [];
+                    $wnd.jQuery.ajax({
+                        dataType: "json",
+                        url: contentSpecRESTUrl,
+                        error: function() {
+                            console.log("Could not find csNodes that relate to the topic");
+                            specDetailsCallbackFinished = true;
+                            doCallback();
+                        },
+                        success: function(csNodeData) {
 
-                        positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()().suggest(word, 5, function(wordData) {
-                            return function(suggestions) {
-                                if (suggestions.length == 0) {
-                                    var option = {};
-                                    option["No Suggestions"]=function(menuItem,menu){};
-                                    retValue.push(option);
+                            console.log("Found CSNodes");
+
+                            csNodeData.items.sort(function(a,b){
+                                return a.item.contentSpec.id - b.item.contentSpec.id;
+                            });
+
+                            var foundSpecs = {};
+                            for (var i = 0, count = csNodeData.items.length; i < count; ++i) {
+                                var csNode = csNodeData.items[i].item;
+                                var specId = csNode.contentSpec.id;
+
+                                if (!foundSpecs[specId]) {
+                                    foundSpecs[specId] = 1;
                                 } else {
-                                    for (var i = 0, _len = suggestions.length; i < _len; i++) {
-                                        var option = {};
-                                        var suggestion = suggestions[i];
-                                        option[suggestion] = function(suggestion, wordData){
-                                            return function(menuItem,menu){
-                                                if (!readOnly) {
-                                                    var currentScroll = editor.getSession().getScrollTop();
-                                                    editor.getSession().setValue(
-                                                        replaceWord(
-                                                            editor.getSession().getValue(),
-                                                            wordData.line,
-                                                            wordData.start,
-                                                            wordData.end,
-                                                            suggestion));
-                                                    editor.getSession().setScrollTop(currentScroll);
-                                                }
-                                            };
-                                        }(suggestion, wordData);
-
-                                        retValue.push(option);
-                                    }
+                                    foundSpecs[specId] += 1;
                                 }
 
-                                callbackWrapper(retValue);
-                            };
-                        }(this.wordData));
-                    }
-                } else if (this.wordData.type == 'tag' || this.wordData.type == 'spec') {
-                    if (xmlElementDB != null) {
-                        var database = xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::getDatabase()();
-                        var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
-                        if (topicId != null) {
-                            var restServer = xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::getRestEndpoint()();
+                                if (foundSpecs[specId] == 1) {
+                                    var editSpecOption = {};
+                                    var editSpecOptionDetails = {};
+                                    editSpecOptionDetails["onclick"] = function(specId) {
+                                        return function(menuItem, menu) {
+                                            cmenu.hide();
+                                            $wnd.open("#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
+                                        };
+                                    }(specId);
 
-                            // get the topic XML
-                            var getTopicRestUrl = restServer + "/1/topic/get/json/" + topicId;
-                            $wnd.jQuery.ajax({
-                                dataType: "json",
-                                url: getTopicRestUrl,
-                                success: function(topicData) {
-                                    // hold the XML
-                                    var holdXMLRestUrl = restServer + "/1/holdxml";
-                                    $wnd.jQuery.ajax({
-                                        type: "POST",
-                                        url: holdXMLRestUrl,
-                                        data: "<?xml-stylesheet type='text/xsl' href='/pressgang-ccms-static/publican-docbook/html-single-renderonly.xsl'?>" + topicData.xml,
-                                        contentType: 'application/xml',
-                                        dataType: 'json',
-                                        success: function(holdXMLData) {
-                                            // echo the XML into an iframe
-                                            var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdXMLData.value;
-                                            var option = {};
-                                            var optionDetails = {};
-                                            optionDetails["onclick"] = function(menuItem,menu){};
-                                            optionDetails["className"] = "ContextMenuIFrameParent";
-                                            optionDetails["disabled"] = true;
-                                            // Firefox will not add scrollbars to the iframe after rendering an XML document. So we
-                                            // need to force the scrollbars by explictly setting the overflow style on the parent
-                                            // div, which will trigger the scrollbars to be made visible.
-                                            option["<iframe onload=\"javascript:document.getElementsByClassName('ContextMenuIFrame')[0].parentNode.style.overflow='auto'\" class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
+                                    var title = "Edit spec " + specId;
 
-                                            // Add an option to open the topic in a new window
-                                            var editOption = {};
-                                            var editOptionDetails = {};
-                                            editOptionDetails["onclick"] = function(menuItem,menu){
-                                                $wnd.open("#SearchResultsAndTopicView;query;topicIds=" + topicId);
-                                            };
-                                            editOption["Edit this topic"] = editOptionDetails;
-
-                                            callbackWrapper([option, editOption]);
+                                    if (csNode.contentSpec && csNode.contentSpec.children_OTM) {
+                                        for (var childIndex = 0, childCount = csNode.contentSpec.children_OTM.items.length; childIndex < childCount; ++childIndex) {
+                                            var childNode = csNode.contentSpec.children_OTM.items[childIndex].item;
+                                            if (childNode.title == "Title") {
+                                                title += " " + childNode.additionalText;
+                                                break;
+                                            }
                                         }
-                                    });
+                                    }
+
+                                    if (csNode.entityRevision) {
+                                        title += " (Topic fixed at revision " + csNode.entityRevision + ")";
+                                    }
+
+                                    editSpecOption[title] = editSpecOptionDetails;
+
+                                    specCallbackOption.push(editSpecOption);
+                                }
+                            }
+
+                            specDetailsCallbackFinished = true;
+                            doCallback();
+                        }
+                    });
+                } else {
+                    var word = editor.getSession().getValue().split("\n")[this.wordData.line].substring(this.wordData.start, this.wordData.end);
+
+                    if (this.wordData.type == 'spelling') {
+                        // Setup a worker to perform the suggestions
+                        var spellingWorker;
+                        if (!suggestionsInitiated) {
+                            // No need to initialise the spelling worker here as the only way we can get here is if the spelling worker has highlighted a line.
+                            spellingWorker = me.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
+
+                            spellingWorker.addEventListener("message", function(e) {
+                                if (e.data.action == "suggest") {
+                                    var suggestions = e.data.suggestions;
+                                    var retValue = [];
+
+                                    if (suggestions.length == 0) {
+                                        var option = {};
+                                        option["No Suggestions"]=function(menuItem,menu){};
+                                        retValue.push(option);
+                                    } else {
+                                        for (var i = 0, _len = suggestions.length; i < _len; i++) {
+                                            var option = {};
+                                            var suggestion = suggestions[i];
+                                            option[suggestion] = function(suggestion){
+                                                return function(menuItem, menu) {
+                                                    if (!readOnly) {
+                                                        var currentScroll = editor.getSession().getScrollTop();
+                                                        editor.getSession().setValue(
+                                                            replaceWord(
+                                                                editor.getSession().getValue(),
+                                                                cmenu.wordData.line,
+                                                                cmenu.wordData.start,
+                                                                cmenu.wordData.end,
+                                                                suggestion));
+                                                        editor.getSession().setScrollTop(currentScroll);
+                                                    }
+                                                };
+                                            }(suggestion);
+
+                                            retValue.push(option);
+                                        }
+                                    }
+
+                                    cmenu.callbackWrapper(retValue);
                                 }
                             });
+
+                            suggestionsInitiated = true;
+                        } else {
+                            spellingWorker = me.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
+                        }
+
+                        spellingWorker.postMessage({action: "suggest", word: word, limit: 5});
+                    } else if (this.wordData.type == 'tag' || this.wordData.type == 'spec') {
+                        if (xmlElementDB != null) {
+                            var database = xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::getDatabase()();
+                            var topicId =  database.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(word);
+                            if (topicId != null) {
+                                var restServer = xmlElementDB.@edu.ycp.cs.dh.acegwt.client.tagdb.XMLElementDB::getRestEndpoint()();
+
+                                // get the topic XML
+                                var getTopicRestUrl = restServer + "/1/topic/get/json/" + topicId;
+                                $wnd.jQuery.ajax({
+                                    dataType: "json",
+                                    url: getTopicRestUrl,
+                                    success: function(topicData) {
+                                        // hold the XML
+                                        var holdXMLRestUrl = restServer + "/1/holdxml";
+                                        $wnd.jQuery.ajax({
+                                            type: "POST",
+                                            url: holdXMLRestUrl,
+                                            data: "<?xml-stylesheet type='text/xsl' href='/pressgang-ccms-static/publican-docbook/html-single-renderonly.xsl'?>" + topicData.xml,
+                                            contentType: 'application/xml',
+                                            dataType: 'json',
+                                            success: function(holdXMLData) {
+                                                // echo the XML into an iframe
+                                                var echoXMLRestUrl = restServer + "/1/echoxml?id=" + holdXMLData.value;
+                                                var option = {};
+                                                var optionDetails = {};
+                                                optionDetails["onclick"] = function(menuItem,menu){};
+                                                optionDetails["className"] = "ContextMenuIFrameParent";
+                                                optionDetails["disabled"] = true;
+                                                // Firefox will not add scrollbars to the iframe after rendering an XML document. So we
+                                                // need to force the scrollbars by explictly setting the overflow style on the parent
+                                                // div, which will trigger the scrollbars to be made visible.
+                                                option["<iframe onload=\"javascript:document.getElementsByClassName('ContextMenuIFrame')[0].parentNode.style.overflow='auto'\" class=\"ContextMenuIFrame\" src=\"" + echoXMLRestUrl + "\"></iframe>"] = optionDetails;
+
+                                                // Add an option to open the topic in a new window
+                                                var editOption = {};
+                                                var editOptionDetails = {};
+                                                editOptionDetails["onclick"] = function(menuItem,menu){
+                                                    $wnd.open("#SearchResultsAndTopicView;query;topicIds=" + topicId);
+                                                };
+                                                editOption["Edit this topic"] = editOptionDetails;
+
+                                                callbackWrapper([option, editOption]);
+                                            }
+                                        });
+                                    }
+                                });
+                            }
                         }
                     }
                 }
             }
-        };
+        }(this);
 
         // Create the context menu object
-        var cmenu = $wnd.jQuery.contextMenu.create(loadSuggestions, {theme:'osx'});
+        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu = $wnd.jQuery.contextMenu.create(loadSuggestions, {theme:'osx'});
+        var cmenu = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu;
 
         // Bind the context menu event, so we can intercept it on markers
         editor.on("nativecontextmenu", function(e) {
@@ -1575,7 +1604,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::conditionalMatchingWorker = new Worker("javascript/highlighters/conditional.js");
             var conditionalMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::conditionalMatchingWorker;
 
-            conditionalMatchingWorker.addEventListener('message', function(e){
+            conditionalMatchingWorker.addEventListener('message', function(e) {
                 try {
                     if (editor == null) {
                         return;
@@ -1665,116 +1694,94 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
-            var positiveDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::positiveDictionary;
-			var negativeDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::negativeDictionary;
-			var negativePhraseDictionary = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::negativePhraseDictionary;
-
 
             if (editor == null) {
                 console.log("editor == null. enableSpellCheckingEnabledNative() was not called successfully.");
                 return;
             }
 
-            if (positiveDictionary == null) {
-                console.log("positiveDictionary == null. Spell checking will not be enabled.");
+            // Initialise the spell checking worker
+            if (!this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::initSpellingWorker()()) {
+                // Failed to init the spelling worker, so don't enable it.
                 return;
             }
 
-            // Add the CSS rules to highlight spelling errors
-            //$wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='misspelled'] { position: absolute; z-index: -2; background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
-            //$wnd.jQuery("<style type='text/css'>div[class^='misspelled'] { background-color: rgba(255, 0, 0, 0.2); }</style>").appendTo("head");
-			//$wnd.jQuery("<style type='text/css'>.ace_marker-layer div[class^='badword'] { position: absolute; z-index: -2; background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
-			//$wnd.jQuery("<style type='text/css'>div[class^='badword'] { background-color: rgba(245, 255, 0, 0.2); }</style>").appendTo("head");
-
             var markersPresent  = [];
             var contentsModified = true;
-			var currentlySpellchecking = false;
-            var dictionaryLoadedInWorker = false;
+            var currentlySpellchecking = false;
+            var initialised = false;
 
             // Check for changes to the text
             editor.getSession().on('change', function(e) {
                 contentsModified = true;
             });
 
-            // Setup a worker to perform the spell checking, and handle the results
-            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker = new Worker("javascript/typojs/checkspelling.js");
             var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
-
             spellingWorker.addEventListener('message', function(e){
-				try {
-					if (editor == null) {
+                if (e.data.action == "init") {
+                    initialised = true;
+                } else if (e.data.action == "spellcheck") {
+                    if (editor == null) {
                         return;
                     }
 
-                    var lineData = e.data;
+                    try {
+                        var lineData = e.data.lineData;
 
-					var session = editor.getSession();
+                        var session = editor.getSession();
 
-					// Clear the markers.
-					for (var i in markersPresent) {
-						session.removeMarker(markersPresent[i]);
-					}
-                    markersPresent =  [];
-
-					var Range = $wnd.ace.require('ace/range').Range;
-
-                    for (var lineDataIndex = 0, lineDataLength = lineData.length; lineDataIndex < lineDataLength; ++lineDataIndex) {
-                        var misspellings = lineData[lineDataIndex];
-
-                        for (var j in misspellings.misspelled) {
-                            var range = new Range(lineDataIndex, misspellings.misspelled[j][0], lineDataIndex, misspellings.misspelled[j][1]);
-
-                            // Add the information required to identify the misspelled word to the class itself. This
-                            // gives us a way to go back from a click event to a word.
-                            markersPresent[markersPresent.length] = session.addMarker(
-                                range,
-                                "misspelled-" + lineDataIndex + "-" + misspellings.misspelled[j][0] + "-" + misspellings.misspelled[j][1],
-                                "typo",
-                                true);
+                        // Clear the markers.
+                        for (var i in markersPresent) {
+                            session.removeMarker(markersPresent[i]);
                         }
+                        markersPresent =  [];
 
-                        for (var j in misspellings.badWords) {
-                            var range = new Range(lineDataIndex, misspellings.badWords[j][0], lineDataIndex, misspellings.badWords[j][1]);
-                            markersPresent[markersPresent.length] = session.addMarker(
-                                range,
-                                "badword-" + lineDataIndex + "-" + misspellings.badWords[j][0] + "-" + misspellings.badWords[j][1],
-                                "typo",
-                                true);
+                        var Range = $wnd.ace.require('ace/range').Range;
+
+                        for (var lineDataIndex = 0, lineDataLength = lineData.length; lineDataIndex < lineDataLength; ++lineDataIndex) {
+                            var misspellings = lineData[lineDataIndex];
+
+                            for (var j in misspellings.misspelled) {
+                                var range = new Range(lineDataIndex, misspellings.misspelled[j][0], lineDataIndex, misspellings.misspelled[j][1]);
+
+                                // Add the information required to identify the misspelled word to the class itself. This
+                                // gives us a way to go back from a click event to a word.
+                                markersPresent[markersPresent.length] = session.addMarker(
+                                    range,
+                                    "misspelled-" + lineDataIndex + "-" + misspellings.misspelled[j][0] + "-" + misspellings.misspelled[j][1],
+                                    "typo",
+                                    true);
+                            }
+
+                            for (var j in misspellings.badWords) {
+                                var range = new Range(lineDataIndex, misspellings.badWords[j][0], lineDataIndex, misspellings.badWords[j][1]);
+                                markersPresent[markersPresent.length] = session.addMarker(
+                                    range,
+                                    "badword-" + lineDataIndex + "-" + misspellings.badWords[j][0] + "-" + misspellings.badWords[j][1],
+                                    "typo",
+                                    true);
+                            }
+
+                            for (var j in misspellings.badPhrases) {
+                                var range = new Range(lineDataIndex, misspellings.badPhrases[j][0], lineDataIndex, misspellings.badPhrases[j][1]);
+                                markersPresent[markersPresent.length] = session.addMarker(
+                                    range,
+                                    "badphrase-" + lineDataIndex + "-" + misspellings.badPhrases[j][0] + "-" + misspellings.badPhrases[j][1],
+                                    "typo",
+                                    true);
+                            }
+
                         }
-
-                        for (var j in misspellings.badPhrases) {
-                            var range = new Range(lineDataIndex, misspellings.badPhrases[j][0], lineDataIndex, misspellings.badPhrases[j][1]);
-                            markersPresent[markersPresent.length] = session.addMarker(
-                                range,
-                                "badphrase-" + lineDataIndex + "-" + misspellings.badPhrases[j][0] + "-" + misspellings.badPhrases[j][1],
-                                "typo",
-                                true);
-                        }
-
-					}
-				} finally {
-					currentlySpellchecking = false;
-				}
+                    } finally {
+                        currentlySpellchecking = false;
+                    }
+                }
             });
 
             var spellCheck = function() {
-                // Wait for the dictionary to be loaded.
-                var loaded = positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()() &&
-                    negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()() &&
-                    negativePhraseDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::isLoaded()();
-
-                if (!loaded) {
+                if (!initialised) {
                     console.log("Waiting for dictionary to load.");
                     return;
-                }
-
-				if (!dictionaryLoadedInWorker) {
-                    // Set the dictionaries.
-                    spellingWorker.postMessage({
-                        positiveDictionary: positiveDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()(),
-                        negativeDictionary: negativeDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()(),
-                        negativePhraseDictionary: negativePhraseDictionary.@edu.ycp.cs.dh.acegwt.client.typo.TypoJS::getDictionary()()});
-					dictionaryLoadedInWorker = true;
                 }
 
                 if (currentlySpellchecking) {
@@ -1787,10 +1794,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
                 console.log("Checking Spelling");
 
-				currentlySpellchecking = true;
-				contentsModified = false;
+                currentlySpellchecking = true;
+                contentsModified = false;
 
-				spellingWorker.postMessage({lines: editor.getSession().getDocument().getAllLines()});
+                spellingWorker.postMessage({action: "spellcheck", lines: editor.getSession().getDocument().getAllLines()});
             }
 
             // Enable spell checking on regular intervals
@@ -1806,6 +1813,27 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             console.log("EXIT AceEditor.enableSpellCheckingEnabledNative()");
         }
 
+    }-*/;
+
+    private native boolean initSpellingWorker() /*-{
+        // Setup a worker to perform the spell checking, and handle the results
+        if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker == null) {
+            var baseTyposJsUrl = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::baseTypoJsUrl;
+            var typoJsLang = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::typoJsLang;
+
+            if (baseTyposJsUrl == null) {
+                console.log("baseTyposJsUrl == null. Spell checking will not be enabled.");
+                return false;
+            }
+
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker = new Worker("javascript/typojs/checkspelling.js");
+            var spellingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellCheckingWorker;
+
+            // init the dictionaries.
+            spellingWorker.postMessage({action: "init", baseTypoJsUrl: baseTyposJsUrl, lang: typoJsLang || "en_US"});
+        }
+
+        return true;
     }-*/;
 
     private native void enableSpecMatching() /*-{
@@ -1920,7 +1948,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             });
 
             // Build the web worker to match tags
-
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker = new Worker("javascript/tagdb/tagdb.js");
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
 
