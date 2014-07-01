@@ -1218,6 +1218,16 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             return output;
         }
 
+        var openExternalLink= function(cmenu, url) {
+            if (cmenu) {cmenu.hide();}
+            var a = $wnd.document.createElement("a");
+            a.setAttribute("href", url);
+            a.setAttribute("rel", "noreferrer");
+            a.setAttribute("target", "_blank");
+            a.click();
+            a = null;
+        }
+
         var loadSuggestions = function(me) {
             return function(cmenu, theme, callback) {
                 // Display an initial loading menu item
@@ -1277,8 +1287,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 var editOption = {};
                                 var editOptionDetails = {};
                                 editOptionDetails["onclick"] = function(menuItem, menu) {
-                                    cmenu.hide();
-                                    $wnd.open("#SearchResultsAndTopicView;query;topicIds=" + wordData.value);
+                                    openExternalLink(cmenu, "#SearchResultsAndTopicView;query;topicIds=" + wordData.value);
                                 }
                                 editOption["Edit topic " + wordData.value] = editOptionDetails;
 
@@ -1298,9 +1307,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     var revisionOption = {};
                                     var revisionOptionDetails = {};
                                     revisionOptionDetails["onclick"] = function(menuItem, menu) {
-                                        cmenu.hide();
                                         // See TopicFilteredResultsAndDetailsPresenter.parseToken() for the format of this url
-                                        $wnd.open("#SearchResultsAndTopicView;topicViewData;" + wordData.value + "=r:" + revision.revision + ";query;topicIds=" + wordData.value);
+                                        openExternalLink(cmenu, "#SearchResultsAndTopicView;topicViewData;" + wordData.value + "=r:" + revision.revision + ";query;topicIds=" + wordData.value);
                                     }
                                     revisionOption[revision.revision + " " + $wnd.moment(revision.lastModified).format("DD MMM YY HH:mm") + " " + message] = revisionOptionDetails;
                                     callBackOptions.push(revisionOption);
@@ -1322,8 +1330,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     var urlOption = {};
                                     var urlOptionDetails = {};
                                     urlOptionDetails["onclick"] = function(menuItem, menu) {
-                                        cmenu.hide();
-                                        $wnd.open(url.url);
+                                        openExternalLink(cmenu, url.url);
                                     }
                                     urlOption[title] = urlOptionDetails;
                                     callBackOptions.push(urlOption);
@@ -1374,8 +1381,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     var editSpecOptionDetails = {};
                                     editSpecOptionDetails["onclick"] = function(specId) {
                                         return function(menuItem, menu) {
-                                            cmenu.hide();
-                                            $wnd.open("#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
+                                            openExternalLink(cmenu, "#ContentSpecFilteredResultsAndContentSpecView;query;contentSpecIds=" + specId);
                                         };
                                     }(specId);
 
@@ -1496,7 +1502,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                                 var editOption = {};
                                                 var editOptionDetails = {};
                                                 editOptionDetails["onclick"] = function(menuItem,menu){
-                                                    $wnd.open("#SearchResultsAndTopicView;query;topicIds=" + topicId);
+                                                    openExternalLink(null, "#SearchResultsAndTopicView;query;topicIds=" + topicId);
                                                 };
                                                 editOption["Edit this topic"] = editOptionDetails;
 
