@@ -192,6 +192,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private JavaScriptObject contextMenu;
 
     private JavaScriptObject liveAutoCompleteFunction;
+    private JavaScriptObject contextMenuFunction;
 
     /**
      * This constructor will only work if the <code>.ace_editor</code> CSS class is set with
@@ -558,6 +559,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             console.log("ENTER AceEditor.destroy()");
 
             var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+            var editorElementId = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId;
             var spellcheckInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::spellcheckInterval;
             var checkConditionsInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::checkConditionsInterval;
             var matchTagsInterval = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval;
@@ -566,6 +568,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var tagMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::tagMatchingWorker;
             var specMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker;
             var contextMenu = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu;
+            var contextMenuFunction = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenuFunction;
             var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
 
             // clean up pending operations
@@ -605,6 +608,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 				this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker = null;
 			}
 
+            if (contextMenuFunction != null) {
+                // Unbind the context menu event
+                var editorEle = $wnd.document.getElementById(editorElementId);
+                editorEle.removeEventListener("contextmenu", contextMenuFunction);
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenuFunction = null;
+            }
+
             if (contextMenu != null) {
                 contextMenu.wordData = null;
                 contextMenu.callbackWrapper = null;
@@ -632,7 +642,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 editor.destroy();
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor = null;
             } else {
-                console.log("editor == null. destory() was not called successfully.");
+                console.log("editor == null. destroy() was not called successfully.");
             }
         } finally {
             console.log("EXIT AceEditor.destroy()");
@@ -1192,6 +1202,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
         var event = $wnd.ace.require("ace/lib/event");
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        var editorElementId = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId;
         var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
         var readOnly = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::readOnly;
         var baseRESTUrl = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::restUrl;
@@ -1220,12 +1231,21 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
         var openExternalLink= function(cmenu, url) {
             if (cmenu) {cmenu.hide();}
+
+            // Calling $wnd.open() may result in the window sharing the same process which causes issues in chrome, so we need to create a
+            // hyperlink with the noreferrer rel attribute (see RHBZ#1079827).
             var a = $wnd.document.createElement("a");
             a.setAttribute("href", url);
             a.setAttribute("rel", "noreferrer");
             a.setAttribute("target", "_blank");
-            a.click();
-            a = null;
+
+            // Calling a.click() doesn't work in firefox so we need to simulate a mouse click event
+            var e = new MouseEvent("click", {
+                "view": $wnd,
+                "bubbles": true,
+                "cancelable": false
+            });
+            a.dispatchEvent(e);
         }
 
         var loadSuggestions = function(me) {
@@ -1506,7 +1526,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                                 };
                                                 editOption["Edit this topic"] = editOptionDetails;
 
-                                                callbackWrapper([option, editOption]);
+                                                cmenu.callbackWrapper([option, editOption]);
                                             }
                                         });
                                     }
@@ -1522,17 +1542,18 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu = $wnd.jQuery.contextMenu.create(loadSuggestions, {theme:'osx'});
         var cmenu = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu;
 
-        // Bind the context menu event, so we can intercept it on markers
-        editor.on("nativecontextmenu", function(e) {
+        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenuFunction = function(e) {
+            var retValue = true;
+
             // Find the markers and see if we clicked one
             $wnd.jQuery("div[class^='misspelled'], div[class^='badword'], div[class^='tagmatch'], div[class^='specmatch'], span[class*='ace_numeric']").each(
                 function() {
                     var jQueryEle = $wnd.jQuery(this);
                     var element = jQueryEle[0];
-                    if (jQueryEle.offset().left <= e.domEvent.clientX &&
-                        jQueryEle.offset().left + jQueryEle.width() >= e.domEvent.clientX &&
-                        jQueryEle.offset().top <= e.domEvent.clientY &&
-                        jQueryEle.offset().top + jQueryEle.height() >= e.domEvent.clientY) {
+                    if (jQueryEle.offset().left <= e.clientX &&
+                        jQueryEle.offset().left + jQueryEle.width() >= e.clientX &&
+                        jQueryEle.offset().top <= e.clientY &&
+                        jQueryEle.offset().top + jQueryEle.height() >= e.clientY) {
 
                         var classAttribute = jQueryEle.attr('class');
                         if (classAttribute != null) {
@@ -1553,11 +1574,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 cmenu.wordData['end'] = matches[4];
 
                                 // Stop the native context menu from loading
-                                event.stopEvent(e.domEvent);
+                                event.stopEvent(e);
+                                retValue = false;
 
                                 // Load the suggestions
                                 if (!(cmenu.shown && cmenu.target === element)) {
-                                    cmenu.show(element, e.domEvent);
+                                    cmenu.show(element, e);
                                 }
                             } else if (classAttribute.indexOf("ace_numeric") != -1) {
                                 var text = $wnd.jQuery(this).text();
@@ -1566,11 +1588,12 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     cmenu.wordData['value'] = text;
 
                                     // Stop the native context menu from loading
-                                    event.stopEvent(e.domEvent);
+                                    event.stopEvent(e);
+                                    retValue = false;
 
                                     // Load the suggestions
                                     if (!(cmenu.shown && cmenu.target === element)) {
-                                        cmenu.show(element, e.domEvent);
+                                        cmenu.show(element, e);
                                     }
                                 }
                             }
@@ -1580,7 +1603,13 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                     }
                 }
             );
-        });
+
+            return retValue;
+        }
+
+        // Bind the context menu event, so we can intercept it on markers
+        var editorEle = $wnd.document.getElementById(editorElementId);
+        editorEle.addEventListener("contextmenu", this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenuFunction);
     }-*/;
 
     private native void enableConditionalMatchingNative() /*-{
