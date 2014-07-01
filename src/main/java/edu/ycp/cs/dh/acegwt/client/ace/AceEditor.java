@@ -1201,6 +1201,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
     private native void setupContextMenu() /*-{
 
         var event = $wnd.ace.require("ace/lib/event");
+        var Range = $wnd.ace.require("ace/range").Range;
         var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
         var editorElementId = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::elementId;
         var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
@@ -1211,22 +1212,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         if (editor == null) {
             console.log("editor == null. setupContextMenu() was not called successfully.");
             return;
-        }
-
-        var replaceWord = function(original, line, start, end, replacement) {
-            var lines = original.split("\n");
-            var output = "";
-            for (var i = 0, _len = lines.length; i < _len; ++i) {
-                if (i != line) {
-                    output += lines[i] + (i == _len - 1 ? "" : "\n");
-                } else {
-                    output += lines[i].substring(0, start);
-                    output += replacement;
-                    output += lines[i].substring(end, lines[i].length) + (i == _len - 1 ? "" : "\n");
-                }
-            }
-
-            return output;
         }
 
         var openExternalLink= function(cmenu, url) {
@@ -1457,16 +1442,15 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                             option[suggestion] = function(suggestion){
                                                 return function(menuItem, menu) {
                                                     if (!readOnly) {
-                                                        var currentScroll = editor.getSession().getScrollTop();
-                                                        editor.getSession().setValue(
-                                                            replaceWord(
-                                                                editor.getSession().getValue(),
-                                                                cmenu.wordData.line,
-                                                                cmenu.wordData.start,
-                                                                cmenu.wordData.end,
-                                                                suggestion));
-                                                        editor.getSession().setScrollTop(currentScroll);
+                                                        var lineNum = cmenu.wordData.line;
+                                                        var start = cmenu.wordData.start;
+                                                        var end = cmenu.wordData.end;
+                                                        var range = new Range(lineNum, start, lineNum, end);
+                                                        editor.getSession().replace(range, suggestion);
                                                     }
+
+                                                    // Re-focus the editor, as the context menu takes the focus
+                                                    editor.focus();
                                                 };
                                             }(suggestion);
 
@@ -1569,9 +1553,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                     cmenu.wordData['type'] = 'spelling';
                                 }
 
-                                cmenu.wordData['line'] = matches[2];
-                                cmenu.wordData['start'] = matches[3];
-                                cmenu.wordData['end'] = matches[4];
+                                cmenu.wordData['line'] = parseInt(matches[2]);
+                                cmenu.wordData['start'] = parseInt(matches[3]);
+                                cmenu.wordData['end'] = parseInt(matches[4]);
 
                                 // Stop the native context menu from loading
                                 event.stopEvent(e);
