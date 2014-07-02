@@ -1320,25 +1320,26 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 }
 
                                 // Add a list of the source urls
+                                if (topicData.sourceUrls_OTM.items.length !== 0) {
+                                    callBackOptions.push($wnd.jQuery.contextMenu.separator);
 
-                                callBackOptions.push($wnd.jQuery.contextMenu.separator);
+                                    for (var urlIndex = 0, urlCount = topicData.sourceUrls_OTM.items.length; urlIndex < urlCount; ++urlIndex) {
+                                        var url = topicData.sourceUrls_OTM.items[urlIndex].item;
 
-                                for (var urlIndex = 0, urlCount = topicData.sourceUrls_OTM.items.length; urlIndex < urlCount; ++urlIndex) {
-                                    var url = topicData.sourceUrls_OTM.items[urlIndex].item;
+                                        // truncate long revision messages
+                                        var title = url.title ? url.title : url.url;
+                                        if (title.length > 100) {
+                                            title = title.substr(0, 97) + "...";
+                                        }
 
-                                    // truncate long revision messages
-                                    var title = url.title ? url.title : url.url;
-                                    if (title.length > 100) {
-                                        title = title.substr(0, 97) + "...";
+                                        var urlOption = {};
+                                        var urlOptionDetails = {};
+                                        urlOptionDetails["onclick"] = function(menuItem, menu) {
+                                            openExternalLink(cmenu, url.url);
+                                        }
+                                        urlOption[title] = urlOptionDetails;
+                                        callBackOptions.push(urlOption);
                                     }
-
-                                    var urlOption = {};
-                                    var urlOptionDetails = {};
-                                    urlOptionDetails["onclick"] = function(menuItem, menu) {
-                                        openExternalLink(cmenu, url.url);
-                                    }
-                                    urlOption[title] = urlOptionDetails;
-                                    callBackOptions.push(urlOption);
                                 }
 
                                 // Now find all the specs that this topic belongs to
