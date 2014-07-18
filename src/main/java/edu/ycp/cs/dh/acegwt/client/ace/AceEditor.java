@@ -569,7 +569,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var specMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker;
             var contextMenu = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu;
             var contextMenuFunction = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenuFunction;
-            var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
 
             // clean up pending operations
             if (spellcheckInterval != null) {
@@ -619,10 +618,6 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 contextMenu.wordData = null;
                 contextMenu.callbackWrapper = null;
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu = null;
-            }
-
-            if (xmlElementDB != null) {
-                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB = null;
             }
 
             // Disable auto complete
