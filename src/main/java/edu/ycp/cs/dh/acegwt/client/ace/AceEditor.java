@@ -159,6 +159,9 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
      * This value is used as a buffer to hold the tag matching state before the editor is created
      */
     private boolean enableTagMatching = false;
+
+    private String codeFoldingRegex = null;
+    private String codeFoldingRegexFlags = null;
     /**
      * This value is used as a buffer to hold the spec metadata matching state before the editor is created
      */
@@ -193,6 +196,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 
     private JavaScriptObject liveAutoCompleteFunction;
     private JavaScriptObject contextMenuFunction;
+    private JavaScriptObject codeFoldingFunction;
 
     /**
      * This constructor will only work if the <code>.ace_editor</code> CSS class is set with
@@ -354,6 +358,8 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
         var enableSpellChecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpellChecking;
         var enableConditionalChecking = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableConditionalChecking;
         var enableAutoComplete = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableAutoComplete;
+        var codeFoldingRegex = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::codeFoldingRegex;
+        var codeFoldingRegexFlags = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::codeFoldingRegexFlags;
 
 		if ($wnd.ace == undefined) {
 			$wnd.alert("window.ace is undefined! Please make sure you have included the appropriate JavaScript files.");
@@ -473,6 +479,10 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
 			this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSpecMatching()();
 		}
 
+        if (codeFoldingRegex) {
+            this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableAutoCodeFoldingNative(Ljava/lang/String;Ljava/lang/String;)(codeFoldingRegex, codeFoldingRegexFlags);
+        }
+
         console.log("\t\tEnabling Snippets");
         this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::enableSnippets()();
 
@@ -569,7 +579,7 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             var specMatchingWorker = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::specMatchingWorker;
             var contextMenu = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu;
             var contextMenuFunction = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenuFunction;
-            var xmlElementDB = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB;
+            var codeFoldingFunction = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::codeFoldingFunction;
 
             // clean up pending operations
             if (spellcheckInterval != null) {
@@ -621,21 +631,19 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::contextMenu = null;
             }
 
-            if (xmlElementDB != null) {
-                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::xmlElementDB = null;
-            }
-
             // Disable auto complete
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::setAutoCompleteEnabledNative(Z)(false);
             if (this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction != null) {
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::liveAutoCompleteFunction = null;
             }
 
+            // Cleanup the auto code folding
+            if (codeFoldingFunction != null) {
+                editor.off("change", codeFoldingFunction);
+                this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::codeFoldingFunction = null;
+            }
+
             if (editor != null) {
-
-                //editor.getSession().removeAllListeners('change');
-                //editor.getSession().removeAllListeners('changeCursor');
-
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::clearAnnotations()();
                 this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::clearMarkers()();
 
@@ -1320,25 +1328,26 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
                                 }
 
                                 // Add a list of the source urls
+                                if (topicData.sourceUrls_OTM.items.length !== 0) {
+                                    callBackOptions.push($wnd.jQuery.contextMenu.separator);
 
-                                callBackOptions.push($wnd.jQuery.contextMenu.separator);
+                                    for (var urlIndex = 0, urlCount = topicData.sourceUrls_OTM.items.length; urlIndex < urlCount; ++urlIndex) {
+                                        var url = topicData.sourceUrls_OTM.items[urlIndex].item;
 
-                                for (var urlIndex = 0, urlCount = topicData.sourceUrls_OTM.items.length; urlIndex < urlCount; ++urlIndex) {
-                                    var url = topicData.sourceUrls_OTM.items[urlIndex].item;
+                                        // truncate long revision messages
+                                        var title = url.title ? url.title : url.url;
+                                        if (title.length > 100) {
+                                            title = title.substr(0, 97) + "...";
+                                        }
 
-                                    // truncate long revision messages
-                                    var title = url.title ? url.title : url.url;
-                                    if (title.length > 100) {
-                                        title = title.substr(0, 97) + "...";
+                                        var urlOption = {};
+                                        var urlOptionDetails = {};
+                                        urlOptionDetails["onclick"] = function(menuItem, menu) {
+                                            openExternalLink(cmenu, url.url);
+                                        }
+                                        urlOption[title] = urlOptionDetails;
+                                        callBackOptions.push(urlOption);
                                     }
-
-                                    var urlOption = {};
-                                    var urlOptionDetails = {};
-                                    urlOptionDetails["onclick"] = function(menuItem, menu) {
-                                        openExternalLink(cmenu, url.url);
-                                    }
-                                    urlOption[title] = urlOptionDetails;
-                                    callBackOptions.push(urlOption);
                                 }
 
                                 // Now find all the specs that this topic belongs to
@@ -2046,6 +2055,75 @@ public class AceEditor extends Composite implements RequiresResize, IsEditor<Lea
             this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::matchTagsInterval = $wnd.setInterval(matchTags, 500);
             matchTags();
         }
+    }-*/;
+
+    public void enableAutoCodeFolding(final String regex, final String flags) {
+        codeFoldingRegex = regex;
+        codeFoldingRegexFlags = flags;
+    }
+
+    private native void enableAutoCodeFoldingNative(final String regex, final String flags) /*-{
+        var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+        var Range = $wnd.ace.require("ace/range").Range;
+        var Fold = $wnd.ace.require("ace/edit_session/fold").Fold;
+
+        if (editor == null) {
+            console.log("editor == null. enableAutoCodeFoldingNative() was not called successfully.");
+            return;
+        }
+
+        var matchRE = new RegExp(regex, flags);
+
+        var matchRegexContent = function(e) {
+            // Remove any current folds
+            var currentCodeFolds = editor.getSession().getAllFolds();
+            for (var count = 0; count < currentCodeFolds.length; count++) {
+                var fold = currentCodeFolds[count];
+                if (fold.isAutoFold) {
+                    editor.getSession().removeFold(fold);
+                }
+            }
+
+            // Add the new folds
+            var lines = editor.getSession().getDocument().getAllLines();
+            for (var lineCount = 0; lineCount < lines.length; lineCount++) {
+                var line = lines[lineCount];
+
+                // If the line is a comment then ignore it
+                if (line.trim().indexOf('#') === 0) {
+                    continue;
+                }
+
+                var match = matchRE.exec(line);
+                if (match) {
+                    var start = match.index;
+                    var end = start + match[0].length;
+                    var range = new Range(lineCount, start, lineCount, end);
+                    var fold = new Fold(range, "...");
+                    fold.isAutoFold = true;
+
+                    // If the changed content is multiple lines, it's probably pasted content so just add the fold
+                    if (e == null || e.data.range.isMultiLine()) {
+                        editor.getSession().addFold(fold);
+                    } else if (e.data.action === "removeText") {
+                        var oldRange = new Range(lineCount, start, lineCount, end + e.data.text.length);
+                        if (!oldRange.containsRange(e.data.range)) {
+                            editor.getSession().addFold(fold);
+                        }
+                    } else {
+                        // Make sure what we just changed isn't in the code fold, as it means we are editing the fold content
+                        if (!range.containsRange(e.data.range)) {
+                            editor.getSession().addFold(fold);
+                        }
+                    }
+                }
+            }
+        };
+        this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::codeFoldingFunction = matchRegexContent;
+
+        // Match the content in the editor and add the code folding whenever a change occurs
+        matchRegexContent(null);
+        editor.on("change", matchRegexContent);
     }-*/;
 
     /**
